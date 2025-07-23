@@ -17,3 +17,6 @@ platforms = ["osx-arm64"]
 ai_scrapper_jobmarket = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+polars = ">=1.31.0,<2"

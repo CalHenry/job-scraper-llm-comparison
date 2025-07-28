@@ -65,14 +65,12 @@ output_parser = PydanticOutputParser(pydantic_object=ExtractedContent)
 
 # Ollama model setup.
 ollama_llm = OllamaLLM(
-    # model="qwen3:1.7b",
     model="qwen2.5:3b",
     temperature=0,
     format="json",
 )
 
-# The prompt is in english despite the document being in french. English prompt showed slightly better performances
-
+# The prompt is in english despite the document being in french. English prompts showed slightly better performances
 EXTRACT_INFO_FROM_JOBOFFER = """You are an expert extraction algorithm. 
 You only extract the content that fits into the categories. 
 Almost all the categories are given by the keywords that are the markdown headers.
@@ -110,8 +108,7 @@ def extract_content(document: str) -> dict:
     return job_data
 
 
-file_path = "outputs/results/tenta_3.md"
-
+file_path = "outputs/scrapping_results/tenta_3.md"
 document = {"document": read_markdown_file(file_path)}
 
 
@@ -120,4 +117,8 @@ extraction_chain = prompt_template | ollama_llm
 
 
 extracted_content = extract_content(document)
-print(f"{extracted_content.model_dump_json(indent=2)}")
+# print(f"{extracted_content.model_dump_json(indent=2)}")
+
+# save to clean json
+with open("outputs/parsing_results/tenta_3.json", mode="w") as file:
+    file.write(extracted_content.model_dump_json(indent=2))

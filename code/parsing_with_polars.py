@@ -1,6 +1,8 @@
 from pathlib import Path
+from typing import List
 
 import polars as pl
+from polars import Expr
 
 """
 In this script we will process the markdown file of the job offer to have the right content in the right variable.
@@ -8,6 +10,8 @@ We will compare our result to the output of the LLM.
 
 pros: 100% deterministic and instantaneous
 cons: need go deeper into the document and do actual data manipulations. Weak to inconsistencies in the document headers
+
+We use polars for string and data manipulation along with regex patterns
 """
 
 # Import the markdown file as a single string
@@ -54,7 +58,11 @@ We will use Polars expressions to have a readable and clear code:
     We use str.replace_all() with regex patterns.
 
 With the expressions, we have isolated in the same object all the modifications that are alike.
+We don't create intermediate outputs
 With good naming of the expressions and the explicit polars's function names, we can have an immediate idea of what each expression do.
+Polars helps us understand what the expression does by only looking at it's Context:
+    - .with_columns() will create new variables
+    - .select() will modify content within variables or produce aggregations or combinaisons of the seleted vars
 
 --> The block of code that actually modifies the data is 9 lines long (32 without the expressions).
 --> Each line does a different modification to the dataframe.
@@ -62,7 +70,18 @@ With good naming of the expressions and the explicit polars's function names, we
     - High-level overview for quick understanding
     - Granular organization to understand the actual code and logic while knowing where to look
 """
-categories_order = [
+
+COLUMN_MAPPING = {
+    "column_2": "missions",
+    "column_3": "profil",
+    "column_5": "application",
+    "column_8": "employeur_description",
+    "column_10": "complementary_info",
+    "column_12": "job_status",
+    "column_13": "profession",
+}
+
+WANTED_ORDER = [
     "title",
     "ref",
     "employeur_name",
@@ -78,16 +97,6 @@ categories_order = [
     "job_status",
     "profession",
 ]
-
-col_names = {
-    "column_2": "missions",
-    "column_3": "profil",
-    "column_5": "application",
-    "column_8": "employeur_description",
-    "column_10": "complementary_info",
-    "column_12": "job_status",
-    "column_13": "profession",
-}
 
 # extract content with regex patterns
 extract_content_from_col_1 = (
@@ -118,12 +127,41 @@ polars_parsing = (
     pl.DataFrame(cleanned_and_splitted[0], schema={"col1"})
     .transpose()  # from 1 var n rows to 1 row n vars
     .with_columns(extract_content_from_col_1)
-    .rename(col_names)
+    .rename(COLUMN_MAPPING)
     .with_columns(concat_columns)
     .drop(pl.col(r"^column_.*$"))  # drop variables called 'column_*'
     .select(remove_noise_and_whitespaces)
-    .select(categories_order)  # reorder the cols
+    .select(WANTED_ORDER)  # reorder the cols
 )
+
+
+def process_dataframe(
+    cleanned_and_splitted: List[str],
+    extract_content_from_col_1: Expr,
+    COLUMN_MAPPING: dict,
+    concat_columns: Expr,
+    remove_noise_and_whitespaces: Expr,
+    WANTED_ORDER: List,
+):
+    """
+    Process job offer content with string and data manipulations.
+    Returns:
+    - polars.DataFrame
+    """
+    polars_parsing = (
+        pl.DataFrame(cleanned_and_splitted[0], schema={"col1"})
+        .transpose(include_header=True, header_name="col1", column_names=["col1"])
+        .with_columns(extract_content_from_col_1)
+        .rename(COLUMN_MAPPING)
+        .with_columns(concat_columns)
+        .drop(pl.col(r"^column_.*$"))
+        .select(remove_noise_and_whitespaces)
+        .select(WANTED_ORDER)
+    )
+    return polars_parsing
+
+
+polars_parsing = polars_parsing(cleanned_and_splitted)
 
 # Save as JSON for comparison with LLM output
 output_with_polars = Path("outputs/parsing_results/output_with_polars.json")

@@ -35,7 +35,7 @@ class ExtractedContent(BaseModel):
         default=None,
         description="Description of the missions. After the keywords: Vos missions en quelques mots",
     )
-    profil: Optional[str] = Field(
+    profile: Optional[str] = Field(
         default=None,
         description="Description of the seeked profile. After the keywords: Profil recherché",
     )
@@ -81,7 +81,7 @@ IMPORTANT:
 - Continue reading through the entire text even if you encounter irrelevant sentences
 - Look for content both before AND after any line breaks or interruptions
 - ignore 'Afficher la suite'
-Some categories are long like 'missions' or 'profil'
+Some categories are long like 'missions' or 'profile'
 
 Document:
 {document}
@@ -108,7 +108,7 @@ def extract_content(document: str) -> dict:
     return job_data
 
 
-file_path = "outputs/scrapping_results/tenta_3.md"
+file_path = "outputs/scrapping_results/tenta_8.md"
 document = {"document": read_markdown_file(file_path)}
 
 
@@ -120,5 +120,5 @@ extracted_content = extract_content(document)
 # print(f"{extracted_content.model_dump_json(indent=2)}")
 
 # save to clean json
-with open("outputs/parsing_results/tenta_3.json", mode="w") as file:
+with open("outputs/json_files/tenta_8.json", mode="w") as file:
     file.write(extracted_content.model_dump_json(indent=2))

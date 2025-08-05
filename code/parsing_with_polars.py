@@ -17,7 +17,7 @@ We use polars for string and data manipulation along with regex patterns
 # Import the markdown file as a single string
 dir_path = "outputs/scrapping_results"
 dir_path = Path(dir_path)
-# files = list(dir_path.glob("*.md"))
+md_files = list(dir_path.glob("*.md"))
 
 tenta_3_path = Path("outputs/scrapping_results/tenta_3.md")
 with open(tenta_3_path) as f:
@@ -26,7 +26,7 @@ with open(tenta_3_path) as f:
 
 # Pre-processing
 """
-We have to do a few pre-processing steps:
+Steps:
     - Convert the string to a polars object (Series)
     - Harmonised the headers (#, ##, ###) -> (##)
     - remove markdown synthax that is now noise (* or **)
@@ -115,23 +115,11 @@ concat_columns = (
     pl.concat_str("complementary_info", "column_11").alias("complementary_info"),
 )
 
-# remove noise and whitespaces
 remove_noise_and_whitespaces = (
     pl.all()
     .str.strip_chars()
     .str.replace_all(r"^(.*?)\n", value="")
-    .str.replace_all(r"\n", " ")
-)
-
-polars_parsing = (
-    pl.DataFrame(cleanned_and_splitted[0], schema={"col1"})
-    .transpose()  # from 1 var n rows to 1 row n vars
-    .with_columns(extract_content_from_col_1)
-    .rename(COLUMN_MAPPING)
-    .with_columns(concat_columns)
-    .drop(pl.col(r"^column_.*$"))  # drop variables called 'column_*'
-    .select(remove_noise_and_whitespaces)
-    .select(WANTED_ORDER)  # reorder the cols
+    .str.replace_all(r"\n", value=" ")
 )
 
 
@@ -150,7 +138,7 @@ def process_dataframe(
     """
     polars_parsing = (
         pl.DataFrame(cleanned_and_splitted[0], schema={"col1"})
-        .transpose(include_header=True, header_name="col1", column_names=["col1"])
+        .transpose(include_header=True, header_name="col1")  # from n rows -> n vars
         .with_columns(extract_content_from_col_1)
         .rename(COLUMN_MAPPING)
         .with_columns(concat_columns)
@@ -161,8 +149,15 @@ def process_dataframe(
     return polars_parsing
 
 
-polars_parsing = polars_parsing(cleanned_and_splitted)
+polars_parsing = process_dataframe(
+    cleanned_and_splitted,
+    extract_content_from_col_1,
+    COLUMN_MAPPING,
+    concat_columns,
+    remove_noise_and_whitespaces,
+    WANTED_ORDER,
+)
 
 # Save as JSON for comparison with LLM output
-output_with_polars = Path("outputs/parsing_results/output_with_polars.json")
-polars_parsing.write_json("output_with_polars")
+output_with_polars = Path("outputs/json_files/output_with_polars.json")
+polars_parsing.write_json(output_with_polars)

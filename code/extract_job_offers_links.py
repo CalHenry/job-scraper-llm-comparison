@@ -22,7 +22,7 @@ async def extract_links(job_name: str):
         word_count_threshold=5,
     )
 
-    # Sscrapping
+    # Scrapping
     async with AsyncWebCrawler(config=browser_conf) as crawler:
         result = await crawler.arun(
             url=f"https://choisirleservicepublic.gouv.fr/nos-offres/filtres/mot-cles/{job_name_encoded}/",

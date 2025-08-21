@@ -92,24 +92,6 @@ def extract_or_column_name(series, pattern: str):
     return extracted if extracted is not None else series.name
 
 
-temp_df = (
-    pl.DataFrame(clean_and_split(tenta_3)[0])
-    .transpose()
-    .with_columns(extract_content_from_col_1)
-)
-
-extract_test = [
-    extract_or_column_name(s, all_possible_headers) for s in temp_df.iter_columns()
-]
-
-
-# Create the column mapping
-column_mapping = dict(zip(temp_df.columns, extract_test))
-
-# Apply the rename
-wip = temp_df.rename(column_mapping)
-
-
 def process_md_to_dataframe(
     data,
     all_possible_headers=all_possible_headers,
@@ -136,9 +118,6 @@ def process_md_to_dataframe(
 
     # Apply the rename and return
     return temp_df.rename(column_mapping)
-
-
-###### ######################################################################
 
 
 ###### ######################################################################
@@ -218,53 +197,7 @@ FINAL_COLUMNS = [
     "profession",
 ]
 
-# Build expressions
-available_cols = set(wip.columns)
-concat_expressions = build_concat_expressions(CONCAT_CONFIGS, available_cols)
 
-# to see the expressions that will apply to the dataframe
-[print(exp) for i, exp in enumerate(concat_expressions)]
-
-# profile fallback
-if "Profil recherché" not in available_cols:
-    available_cols.add("text")  # add the varname "text" to the available_cols
-    print(available_cols)
-
-    for col_series in wip.iter_columns():
-        has_profil = col_series.str.contains(r"(?i)profil").any()
-        if has_profil:
-            profil_column = col_series.name
-            print(profil_column)
-
-    concat_expressions.append(
-        pl.col(f"{profil_column}")
-        .str.extract(
-            r"(?i)(profil[^\n]*(?:\n[^\n]+)*)"
-        )  # matches content after 'profil' until we encounter double new lines
-        .alias("profile")
-    )
-
-# Execute pipeline
-wip_test_c = (
-    wip.with_columns(concat_expressions)
-    .rename(
-        {
-            "Vos missions en quelques mots": "missions",
-            "Statut du poste": "job_status",
-            "Métier de référence": "profession",
-            **(
-                {"Descriptif du service": "employeur_description"}
-                if "Descriptif du service" in available_cols
-                else {}
-            ),
-        }
-    )
-    .select(remove_noise_and_whitespaces)
-    .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
-)
-
-
-# as a function
 def clean_cols_with_expressions(
     wip,
     CONCAT_CONFIGS=CONCAT_CONFIGS,

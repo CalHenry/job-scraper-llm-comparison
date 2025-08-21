@@ -14,7 +14,7 @@ class ExtractedContent(BaseModel):
     )
     ref: Optional[str] = Field(
         default=None,
-        description="Reference of the page, number in 2 part with a year, a dash - and another number. After the keyword: Référence",
+        description="Reference of the page, number in 2 parts with a dash - and number. After the keyword: Référence",
     )
     employeur_name: Optional[str] = Field(
         default=None,

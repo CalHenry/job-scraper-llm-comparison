@@ -2,16 +2,17 @@ from pathlib import Path
 from typing import List, Tuple
 
 import polars as pl
-from polars import Expr
+
+# from polars.selectors import cs
+import polars.selectors as cs
 from polars._typing import IntoExpr
-from polars.selectors import cs
 
 """
-In this script we will process the markdown file of the job offer to have the right content in the right variable.
-We will compare our result to the output of the LLM.
+In this script we process the markdown file of the job offer to filter the content and place the right parts in the right variable.
+We will compare our result to the output of the LLM from the others script.
 
 pros: 100% deterministic and instantaneous
-cons: need go deeper into the document and do actual data manipulations. Weak to inconsistencies in the document headers
+cons: need go deeper into the document and do actual data manipulations. Weak to inconsistencies in the document content or structure
 
 We use polars for string and data manipulation along with regex patterns
 """
@@ -27,9 +28,10 @@ for file in files_names:
         md_files.append(content)
 
 
-tenta_3_path = Path("outputs/scrapping_results/tenta_3.md")
+tenta_3_path = Path("outputs/scrapping_results/tenta_8.md")
 with open(tenta_3_path) as f:
     tenta_3 = f.read()
+
 
 # Pre-processing
 """
@@ -65,20 +67,23 @@ def clean_and_split(file):
         .str.replace_all(pattern=r"(^|\s)###($|\s)", value="##")
         .str.replace_all(pattern=r"(^|\s)#($|\s)", value="##")
         .str.replace_all(r"\*+", "")
-        .str.replace_all(r"Afficher la suite", "")
-    ).str.split("## ")
+        .str.replace_all(r"Afficher la suite", " ")
+    ).str.split("##")
 
 
 # extract content with regex patterns
-extract_content_from_col_0 = (
-    (pl.col("column_0").str.extract(r"(.*)\sRéf.").alias("title")),
-    (pl.col("column_0").str.extract(r"Référence :\s(.*)").alias("ref")),
-    (pl.col("column_0").str.extract(r"Employeur :\s(.*)").alias("employeur_name")),
-    (pl.col("column_0").str.extract(r"Localisation :\s(.*)").alias("loc")),
-    (pl.col("column_0").str.extract(r"Expérience souhaitée\s(.*)").alias("experience")),
-    (pl.col("column_0").str.extract(r"Catégorie\s(.*)").alias("cat")),
-    (pl.col("column_0").str.extract(r"Télétravail possible\s(.*)").alias("remote")),
+
+extract_content_from_col_1 = (
+    (pl.col("column_1").str.extract(r"(.*)\sRéf.").alias("title")),
+    (pl.col("column_1").str.extract(r"Référence :\s(.*)").alias("ref")),
+    (pl.col("column_1").str.extract(r"Employeur :\s(.*)").alias("employeur_name")),
+    (pl.col("column_1").str.extract(r"Localisation :\s(.*)").alias("loc")),
+    (pl.col("column_1").str.extract(r"Expérience souhaitée\s(.*)").alias("experience")),
+    (pl.col("column_1").str.extract(r"Catégorie\s(.*)").alias("cat")),
+    (pl.col("column_1").str.extract(r"Télétravail possible\s(.*)").alias("remote")),
 )
+
+###### ######################################################################
 
 
 ###### ######################################################################
@@ -87,21 +92,50 @@ def extract_or_column_name(series, pattern: str):
     return extracted if extracted is not None else series.name
 
 
-extract_test = [
-    extract_or_column_name(s, all_possible_headers) for s in wip.iter_columns()
-]
-
 temp_df = (
     pl.DataFrame(clean_and_split(tenta_3)[0])
     .transpose()
-    .with_columns(extract_content_from_col_0)
+    .with_columns(extract_content_from_col_1)
 )
+
+extract_test = [
+    extract_or_column_name(s, all_possible_headers) for s in temp_df.iter_columns()
+]
+
 
 # Create the column mapping
 column_mapping = dict(zip(temp_df.columns, extract_test))
 
 # Apply the rename
 wip = temp_df.rename(column_mapping)
+
+
+def process_md_to_dataframe(
+    data,
+    all_possible_headers=all_possible_headers,
+    extract_content_from_col_1=extract_content_from_col_1,
+    extract_or_column_name=extract_or_column_name,
+):
+    """
+    Process a list of strings into DataFrames by transposing, extracting content, and renaming columns.
+    """
+    # Create temporary DataFrame
+    temp_df = (
+        pl.DataFrame(clean_and_split(data)[0])
+        .transpose()
+        .with_columns(extract_content_from_col_1)
+    )
+
+    # Extract column names
+    extract_test = [
+        extract_or_column_name(s, all_possible_headers) for s in temp_df.iter_columns()
+    ]
+
+    # Create the column mapping
+    column_mapping = dict(zip(temp_df.columns, extract_test))
+
+    # Apply the rename and return
+    return temp_df.rename(column_mapping)
 
 
 ###### ######################################################################
@@ -137,14 +171,19 @@ remove_noise_and_whitespaces = (
     .str.replace_all(
         r"^(.*?)\n", value=""
     )  # remove first line if it ends with a \n. To remove the headers artifacts
-    # .str.replace_all(r"\n", value=" ") # replace newline by a blank
+    # .str.replace_all(r"\n", value=" ")
+    # replace newline by a blank
 )
 
 # Configuration:
 CONCAT_CONFIGS: List[Tuple[str, List[str], str]] = [
     (
         "Éléments de candidature",  # base col
-        ["Documents à transmettre", "Personnes à contacter"],  # [potential_cols]
+        [
+            "Documents à transmettre",
+            "Personnes à contacter",
+            "Descriptif du service",
+        ],  # [potential_cols]
         "application",  # alias
     ),
     (
@@ -183,13 +222,26 @@ FINAL_COLUMNS = [
 available_cols = set(wip.columns)
 concat_expressions = build_concat_expressions(CONCAT_CONFIGS, available_cols)
 
-# to see the expressiosn that will apply to the dataframe
+# to see the expressions that will apply to the dataframe
 [print(exp) for i, exp in enumerate(concat_expressions)]
 
 # profile fallback
 if "Profil recherché" not in available_cols:
+    available_cols.add("text")  # add the varname "text" to the available_cols
+    print(available_cols)
+
+    for col_series in wip.iter_columns():
+        has_profil = col_series.str.contains(r"(?i)profil").any()
+        if has_profil:
+            profil_column = col_series.name
+            print(profil_column)
+
     concat_expressions.append(
-        pl.col("text").str.extract(r"(?i)(profil.*)", group_index=1).alias("profile")
+        pl.col(f"{profil_column}")
+        .str.extract(
+            r"(?i)(profil[^\n]*(?:\n[^\n]+)*)"
+        )  # matches content after 'profil' until we encounter double new lines
+        .alias("profile")
     )
 
 # Execute pipeline
@@ -210,31 +262,81 @@ wip_test_c = (
     .select(remove_noise_and_whitespaces)
     .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
 )
+
+
+# as a function
+def clean_cols_with_expressions(
+    wip,
+    CONCAT_CONFIGS=CONCAT_CONFIGS,
+    FINAL_COLUMNS=FINAL_COLUMNS,
+    remove_noise_and_whitespaces=remove_noise_and_whitespaces,
+):
+    """
+    Process a Polars DataFrame by building and applying concatenation expressions,
+    renaming columns, and selecting final columns.
+    """
+    # Build expressions
+    available_cols = set(wip.columns)
+    concat_expressions = build_concat_expressions(CONCAT_CONFIGS, available_cols)
+
+    # Print the expressions that will apply to the DataFrame
+    # [print(exp) for i, exp in enumerate(concat_expressions)]
+
+    # Profile fallback (add expression)
+    if "Profil recherché" not in available_cols:
+        for col_series in wip.iter_columns():  # look for the col that contain 'profile'
+            has_profil = col_series.str.contains(r"(?i)profil").any()
+            if has_profil:
+                profil_column = col_series.name
+                print(profil_column)
+
+        concat_expressions.append(
+            pl.col(f"{profil_column}")  # extract text from the col that has 'profile'
+            .str.extract(
+                r"(?i)(profil[^\n]*(?:\n[^\n]+)*)"
+            )  # matches content after 'profil' until we encounter double new lines
+            .alias("profile")
+        )
+
+    # Execute pipeline
+    wip_test_c = (
+        wip.with_columns(concat_expressions)
+        .rename(
+            {
+                "Vos missions en quelques mots": "missions",
+                "Statut du poste": "job_status",
+                "Métier de référence": "profession",
+                **(
+                    {"Descriptif du service": "employeur_description"}
+                    if "Descriptif du service" in available_cols
+                    else {}
+                ),
+            }
+        )
+        .select(remove_noise_and_whitespaces)
+        .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
+    )
+
+    return wip_test_c
+
+
 ###### ######################################################################
 
 
-def process_dataframe(
-    cleanned_and_splitted: List[str],
-    extract_content_from_col_1: Expr,
-    COLUMN_MAPPING: dict,
-    concat_columns: Expr,
-    remove_noise_and_whitespaces: Expr,
-    WANTED_ORDER: List,
-) -> pl.DataFrame:
-    """
-    Process job offer content with string and data manipulations.
-    Returns:
-    - polars.DataFrame
-    """
-    return polars_parsing
+def main(json_output=True):
+    cleanned_and_splitted = [process_md_to_dataframe(file) for file in md_files]
 
+    final_df = [clean_cols_with_expressions(wip) for wip in cleanned_and_splitted]
+    combined_df = pl.concat(final_df, how="diagonal")
 
-def main():
-    cleanned_and_splitted = [clean_and_split(file) for file in md_files]
+    # Save as CSV for future usage
+    output_csv = Path("outputs/csv_files/output_with_polars_2.csv")
+    combined_df.write_csv(output_csv)
 
-    # Save as JSON for comparison with LLM output
-    output_with_polars = Path("outputs/json_files/output_with_polars_2.json")
-    combined_df.write_json(output_with_polars)
+    if json_output:
+        # Save as JSON for comparison with LLM output
+        output_json = Path("outputs/json_files/output_with_polars_2.json")
+        combined_df.write_json(output_json)
 
 
 if __name__ == "__main__":

@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import List, Tuple
 
 import polars as pl
-
-# from polars.selectors import cs
 import polars.selectors as cs
 from polars._typing import IntoExpr
 
@@ -14,10 +12,10 @@ We will compare our result to the output of the LLM from the others script.
 pros: 100% deterministic and instantaneous
 cons: need go deeper into the document and do actual data manipulations. Weak to inconsistencies in the document content or structure
 
-We use polars for string and data manipulation along with regex patterns
+We use polars for string and dataframe manipulations along with regex patterns
 """
 
-# Import the markdown file as a single string
+# Import the markdown files as a single string and place them into a List[str]
 dir_path = "outputs/scrapping_results"
 dir_path = Path(dir_path)
 files_names = list(dir_path.glob("*.md"))
@@ -32,12 +30,53 @@ tenta_3_path = Path("outputs/scrapping_results/tenta_8.md")
 with open(tenta_3_path) as f:
     tenta_3 = f.read()
 
-
-# Pre-processing
 """
 Steps:
+
+1. Headers Extraction
+   We use the command line with ripgrep to retrieve all headers from all markdown files.
+
+2. Document Processing
+   We clean and split the documents using the markdown headers as delimiters.
+
+3. First Column Information Extraction
+   We extract the information contained in the first column using simple regex patterns.
+
+4. Dynamic Content Processing
+   Since files don't have identical headers and some headers may be missing, our code has to be 
+    dynamic to adapt to each file:
+
+   Data Preparation:
+   - Create a temporary dataframe with content extracted from the first column, placing it 
+     into separate columns
+   - Rename remaining columns based on a pre-configured mapping
+
+   Polars Expression Processing:
+   - Use Polars expressions to process the dataset (expressions concatenate and rename columns)
+   - Generate expressions dynamically for each column present in the given file, allowing 
+     adaptation to different file structures
+   - Clean data by removing whitespaces and newline characters
+   - Use a List[Tuple] to guide concatenation and naming of concatenated columns, handling 
+     potential missing headers
+   - Use a List[str] to keep and order only the desired columns in the final output
+
+   DataFrame Processing Workflow:
+   With these elements in place, we process the dataframe as follows:
+   - Extract headers for the given file
+   - Build expressions using the extracted headers
+   - Implement a fallback mechanism in an if statement to extract profile information when 
+     the column is missing (profile is key information)
+   - Apply the expressions to the dataframe to:
+     * Concatenate columns and rename them
+     * Clean noise from the data
+     * Select only the desired variables (if present)
+
+5. Data Export
+   Export the processed data as CSV and JSON formats (JSON allows comparison with LLM 
+   processing of the same data).
 """
 
+# Pre-processing:
 # In the terminal: I used 'rg '^\s*\*?\s*(?:##|###)'' in the dir with the .md files to output all the headers for all the files.
 all_possible_headers = r"|".join(
     [
@@ -116,7 +155,6 @@ def process_md_to_dataframe(
     # Create the column mapping
     column_mapping = dict(zip(temp_df.columns, extract_test))
 
-    # Apply the rename and return
     return temp_df.rename(column_mapping)
 
 

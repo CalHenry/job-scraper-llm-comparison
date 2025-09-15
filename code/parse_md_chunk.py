@@ -3,7 +3,7 @@ from typing import Optional
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_ollama.llms import OllamaLLM
-from langchain_text_splitters import ExperimentalMarkdownSyntaxTextSplitter
+from langchain_text_splitters import MarkdownHeaderTextSplitter
 from pydantic import BaseModel, Field
 
 
@@ -66,63 +66,27 @@ output_parser = PydanticOutputParser(pydantic_object=ExtractedContent)
 
 # Ollama model setup.
 ollama_llm = OllamaLLM(
-    # model="qwen3:1.7b",
-    model="qwen2.5:3b",
-    # model="qwen2.5:7b",
+    model="qwen3:4b",
     temperature=0,
     format="json",
 )
 
 # The prompt is in english despite the document being in french. English prompt showed slightly better performances
 
-EXTRACT_INFO_FROM_JOBOFFER = """You are an expert extraction algorithm. 
-You only extract the content that fits into the categories. 
-Almost all the categories are given by the keywords that are the markdown headers.
-Almost all the document fits into a categorie.
-IMPORTANT:
-- Headers (# ## ###) indicates topic boundaries
+EXTRACT_INFO_FROM_JOBOFFER = """Extract the content based on the model provided. Only extract the content that fits into the categories. 
+- No Paraphrasing: Use the exact words from the document. Do not rephrase or interpret the text.
 - Continue reading through the entire text even if you encounter irrelevant sentences
-- Look for content both before AND after any line breaks or interruptions
-- ignore 'Afficher la suite'
-The content 'title' is the first header (#)
-Some categories are long like 'missions' or 'profil'
+
 Document:
 {document}
 
 {json_schema}
 """
-EXTRACT_INFO_FROM_JOBOFFER_chunk_prompt = """You are an expert extraction algorithm. 
-For each of the listed catogires you extract the content from the given chunk of text.
 
-category: title, ref, employeur_name, loc, experience, remote
-{chunk0}
-
-category: missions
-{chunk1}
-
-category: profil
-{chunk2}
-
-category: application
-{chunk4} {chunk5}
-
-category: employeur_description
-{chunk6} {chunk7}
-
-category: complementary_info, job_status, profession
-{chunk8}
-
-IMPORTANT:
-- Look for content both before AND after any line breaks or interruptions
-- ignore 'Afficher la suite'
-Some categories are long like 'missions' or 'profil'
-
-{json_schema}
-"""
-
+###
 prompt_template = PromptTemplate(
     input_variables=["document"],
-    template=EXTRACT_INFO_FROM_JOBOFFER_chunk_prompt,
+    template=EXTRACT_INFO_FROM_JOBOFFER,
     partial_variables={"json_schema": output_parser.get_format_instructions()},
 )
 
@@ -132,48 +96,28 @@ def read_markdown_file(file_path: str) -> str:
         return file.read()
 
 
-""" def extract_content(document: str) -> dict:
+def extract_content(document: str) -> dict:
     json_schema = (ExtractedContent.model_json_schema(),)
     raw_response = extraction_chain.invoke(input=document, json_schema=json_schema)
     job_data = ExtractedContent.model_validate_json(raw_response)
     return job_data
- """
 
 
-def extract_content(document_chunks: list) -> dict:
-    json_schema = (ExtractedContent.model_json_schema(),)
+file_path = "outputs/scrapping_results/tenta_19.md"
+document_content = read_markdown_file(file_path)
 
-    inputs = {f"chunk{i}": chunk for i, chunk in enumerate(document_chunks)}
-    inputs["json_schema"] = json_schema
-
-    raw_response = extraction_chain.invoke(input=inputs)
-    job_data = ExtractedContent.model_validate_json(raw_response)
-    return job_data
-
-
-file_path = "outputs/results/tenta_3.md"
-
-document = {"document": read_markdown_file(file_path)}
-document_2 = read_markdown_file(file_path)
-
-
-# split markdown into chunks based on headers to improve performances and 'help' the model
-headers_to_split_on = [
-    ("#", "Header 1"),
-    ("##", "Header 2"),
-    ("###", "Header 3"),
-]
-
-markdown_splitter = ExperimentalMarkdownSyntaxTextSplitter(
-    headers_to_split_on, strip_headers=False
+# Split document by markdown headers
+splitter = MarkdownHeaderTextSplitter(
+    headers_to_split_on=[("#", "h1"), ("##", "h2"), ("###", "h3")], strip_headers=False
 )
-md_header_splits = markdown_splitter.split_text(document_2)
+chunks = splitter.split_text(document_content)
 
-# chunks_list = {f"chunk{i}": item for i, item in enumerate(md_header_splits)}
+# print(splitter)
+
+document = {"document": chunks}
+document
 
 # Create the chain
 extraction_chain = prompt_template | ollama_llm
-
-# Use the LLM to have a structured JSON output from the markdown document input
-extracted_content = extract_content(md_header_splits)
-print(f"{extracted_content.model_dump_json(indent=2)}")
+extracted_content = extract_content(document)
+extracted_content

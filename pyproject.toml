@@ -3,7 +3,7 @@ authors = [{name = "Calixte Henry", email = "131826512+CalHenry@users.noreply.gi
 name = "ai_scrapper_jobmarket"
 requires-python = ">= 3.11"
 version = "0.1.0"
-dependencies = [ "crawl4ai>=0.7.4,<0.8", "nest-asyncio>=1.6.0,<2", "langchain-ollama>=0.3.6,<0.4", "curl-cffi>=0.13.0,<0.14"]
+dependencies = [ "crawl4ai>=0.7.4,<0.8", "nest-asyncio>=1.6.0,<2", "langchain-ollama>=0.3.6,<0.4", "curl-cffi>=0.13.0,<0.14", "lmstudio>=1.5.0,<2"]
 
 [build-system]
 build-backend = "hatchling.build"
@@ -22,3 +22,4 @@ ai_scrapper_jobmarket = { path = ".", editable = true }
 polars = ">=1.32.3,<2"
 langchain-core = ">=0.3.74,<0.4"
 langchain = ">=0.3.27,<0.4"
+transformers = ">=4.56.0,<5"

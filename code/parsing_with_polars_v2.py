@@ -1,3 +1,5 @@
+import argparse
+import time
 from pathlib import Path
 from typing import List, Tuple
 
@@ -15,20 +17,68 @@ cons: need go deeper into the document and do actual data manipulations. Weak to
 We use polars for string and dataframe manipulations along with regex patterns
 """
 
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Process markdown job offer files")
+    parser.add_argument(
+        "--input",
+        "-i",
+        type=str,
+        default="outputs/csv_files",
+        help="Input path: either a directory containing .md files or a single .md file (default: outputs/test1)",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default="outputs/csv_files/polars_offer.csv",
+        help="Output JSON file path (default: outputs/json_files/polars_offer_3.json)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Also save as JSON file (replaces .csv with .json in output path)",
+    )
+    return parser.parse_args()
+
+
 # Import the markdown files as a single string and place them into a List[str]
-dir_path = "outputs/scrapping_results"
-dir_path = Path(dir_path)
-files_names = list(dir_path.glob("*.md"))
-md_files = []
-for file in files_names:
-    with open(file) as f:
-        content = f.read()
-        md_files.append(content)
+def load_markdown_files(input_path: str) -> List[str]:
+    """
+    Load markdown files from either a single file or directory
+    Returns a list of markdown content strings
+    """
+    input_path = Path(input_path)
+    md_files = []
+    is_single_file = False
 
+    if input_path.is_file():
+        # Single file processing
+        if input_path.suffix.lower() != ".md":
+            raise ValueError(f"File must be a .md file, got: {input_path}")
 
-tenta_3_path = Path("outputs/scrapping_results/tenta_8.md")
-with open(tenta_3_path) as f:
-    tenta_3 = f.read()
+        with open(input_path) as f:
+            content = f.read()
+            md_files.append(content)
+        is_single_file = True
+
+    elif input_path.is_dir():
+        # Directory processing
+        files_names = list(input_path.glob("*.md"))
+
+        if not files_names:
+            raise ValueError(f"No .md files found in directory: {input_path}")
+
+        for file in files_names:
+            with open(file) as f:
+                content = f.read()
+                md_files.append(content)
+
+    else:
+        raise ValueError(f"Input path does not exist: {input_path}")
+
+    return md_files, is_single_file
+
 
 """
 Steps:
@@ -54,7 +104,7 @@ Steps:
    Polars Expression Processing:
    - Use Polars expressions to process the dataset (expressions concatenate and rename columns)
    - Generate expressions dynamically for each column present in the given file, allowing 
-     adaptation to different file structures
+     adaptation to the different file structures
    - Clean data by removing whitespaces and newline characters
    - Use a List[Tuple] to guide concatenation and naming of concatenated columns, handling 
      potential missing headers
@@ -122,10 +172,7 @@ extract_content_from_col_1 = (
     (pl.col("column_1").str.extract(r"Télétravail possible\s(.*)").alias("remote")),
 )
 
-###### ######################################################################
 
-
-###### ######################################################################
 def extract_or_column_name(series, pattern: str):
     extracted = series.str.extract_all(pattern=pattern).list.first().first()
     return extracted if extracted is not None else series.name
@@ -158,7 +205,9 @@ def process_md_to_dataframe(
     return temp_df.rename(column_mapping)
 
 
-###### ######################################################################
+############################################################################
+
+
 def build_concat_expressions(
     configs: List[Tuple[str, List[str], str]], available_cols: List[str]
 ) -> List[IntoExpr]:
@@ -187,9 +236,8 @@ remove_noise_and_whitespaces = (
     .str.strip_chars()
     .str.replace_all(
         r"^(.*?)\n", value=""
-    )  # remove first line if it ends with a \n. To remove the headers artifacts
+    )  # remove first line if it ends with a \n (it removes the headers artifacts)
     # .str.replace_all(r"\n", value=" ")
-    # replace newline by a blank
 )
 
 # Configuration:
@@ -250,7 +298,7 @@ def clean_cols_with_expressions(
     available_cols = set(wip.columns)
     concat_expressions = build_concat_expressions(CONCAT_CONFIGS, available_cols)
 
-    # Print the expressions that will apply to the DataFrame
+    # Print the expressions that will be applied to the DataFrame
     # [print(exp) for i, exp in enumerate(concat_expressions)]
 
     # Profile fallback (add expression)
@@ -259,7 +307,10 @@ def clean_cols_with_expressions(
             has_profil = col_series.str.contains(r"(?i)profil").any()
             if has_profil:
                 profil_column = col_series.name
-                print(profil_column)
+                offer_ref = wip.select("ref").item()
+                print(
+                    f"Found profile content in '{profil_column}' for offer '{offer_ref}'"
+                )
 
         concat_expressions.append(
             pl.col(f"{profil_column}")  # extract text from the col that has 'profile'
@@ -291,24 +342,58 @@ def clean_cols_with_expressions(
     return wip_test_c
 
 
-###### ######################################################################
+############################################################################
 
 
-def main(json_output=True):
+def main():
+    args = parse_arguments()
+
+    md_files, is_single_file = load_markdown_files(args.input)
+
+    # raw markdown --> temporary dataframes
     cleanned_and_splitted = [process_md_to_dataframe(file) for file in md_files]
 
+    # temporary dataframes --> clean and organised dataframe
     final_df = [clean_cols_with_expressions(wip) for wip in cleanned_and_splitted]
     combined_df = pl.concat(final_df, how="diagonal")
 
-    # Save as CSV for future usage
-    output_csv = Path("outputs/csv_files/output_with_polars_2.csv")
-    combined_df.write_csv(output_csv)
-
-    if json_output:
-        # Save as JSON for comparison with LLM output
-        output_json = Path("outputs/json_files/output_with_polars_2.json")
+    if is_single_file:
+        # always output as JSON, file name will be
+        input_path = Path(args.input)
+        output_json = "outputs" / "compare_results" / f"polars_{input_path.name}.json"
         combined_df.write_json(output_json)
+
+    else:
+        # output path
+        output_csv = Path(args.output)
+        output_csv.parent.mkdir(
+            parents=True, exist_ok=True
+        )  # can create the dir if doesn't exist
+
+        # Save as CSV
+        combined_df.write_csv(output_csv)
+
+        # merge with existing csv file, removes duplicates
+        if output_csv.exists():
+            existing_df = pl.read_csv(output_csv)
+            combined_df = pl.concat([existing_df, combined_df], how="diagonal").unique(
+                subset="ref"
+            )
+        combined_df.write_csv(output_csv)
+
+        # Save as JSON if requested
+        if args.json:
+            input_path = Path(args.input)
+            # update the path for JSON files
+            output_json_dir = output_csv.parent.parent / "json_file"
+            output_json_dir.mkdir(parents=True, exist_ok=True)
+            output_json = output_json_dir / f"{input_path.name}.json"
+            combined_df.write_json(output_json)
 
 
 if __name__ == "__main__":
+    script_start = time.time()
     main()
+    script_end = time.time()
+    total_time = script_end - script_start
+    print(f"Polars script execution time: {total_time:.2f}s")

@@ -341,8 +341,142 @@ Cons:
 
 ### LLM evaluation: Detailed pros/cons, failure patterns, prompt engineering findings
 
+**pros**: 
+- Excellent for the extraction off multiple, well defined, short content
+- Easier and faster to implement
+- code is overall easy to undestand
+- bigger models would be more reliable at this task
+
+**cons**: 
+- requires to understand how the LLM will handle the task and some tests and retries
+- requires hardware
+
 
 ### String manipulation evaluation: Polars expressions approach
+
+Let's dive into the Polars expression in the function "build_concat_expressions".  
+
+
+```{python}
+expr = pl.concat_str(
+                [pl.col(col) for col in existing_cols], separator="\n"
+            ).alias(alias)
+```
+
+This expressions works with polars datasets has it does modification on **multiple columns**.  
+Let's brake it down:  
+- ```pl.col()``` selects columns of the dataset
+Here we have a list comprehenssion to select all the columns from a list. This is part of the adaptative approach we used to handle the different file stuctures.
+- ```pl.concat_str(..., separator="\n")``` concatenates the content of selected columns into a single string. The serator is the element to be placed between each piece. So we basically join the content of the selected columns, and place them into a **new** variable, and we use the newline character \n to seperate each joined element in the new string.  
+- ```.alias()``` is a function to rename variables. Here it rename the variable we just have created. 
+
+So this expressions:
+- selects variables
+- concatenantes values
+- rename the created variable
+
+To use the expression we call it by it's name like a function 
+
+
+---
+
+Polars expresions are ment to work with polars DataFrames.
+
+```
+remove_noise_and_whitespaces = (
+    pl.all()
+    .str.strip_chars()
+    .str.replace_all(
+        r"^(.*?)\n", value=""
+    )  # remove first line if it ends with a \n (it removes the headers artifacts)
+    # .str.replace_all(r"\n", value=" ")
+)
+```
+Let's break it down:
+- The expresion's name should inform what it does --> It remove unwanted content as well as whitespaces.
+- ```pl.all()``` select all the variable of the dataset
+- ```str.str_chars()``` removes leading and trailling whitespaces from the string values
+- ```.str.replace_all(r"^(.*?)\n", value="")``` replaces a match patterns by a value.  
+Since we replace with nothing, we remove the element.  
+What we want to remove is given by the *regex* pattern "^(.*?)\n". Let's break it down:
+**^** means the start of the string
+The parathesis **()** declare a capture group
+**.** means any character expect a newline
+**\*** is a quantifier, * mean 0 or more
+**?** this makes the quantifier non-greedy so we match as few as possible until the pattern is satisfied.
+**\n** is a newline character.
+
+We can express this regex as a sentence:  
+- From the start of the line, match any character until it encounters a newline character. The pattern will stop at the first newline character found after the pattern, rather than going to the *last* newline character it can find.
+
+In practice, this pattern is used to extract the first line of a string. In my case, the first line was the markdown header and i didn't wanted the header in the content since the variable name already had the information.
+- ```.str.replace_all(r"\n", value=" ")``` replace the newline characters by a blank. This effectively makes the content a single line.
+
+Going back to the expression's name:
+- It removes noise (markdown headers that are the first lines of the strings)
+- It removes whitespaces
+- It makes the document a single line 
+
+
+This expression was built with a specific dataframe in mind. But it can be resused on another dataset as long as it matches the expressions actions.  
+For example, i could do my processing again on other job offers and instead of rewritting the code, like with a function, i can call the expression on my dataset.  
+
+Now let's see the different expressions in the final pipeline and why it is a cleanner way to write code.
+
+```
+    wip_c = (
+        wip.with_columns(concat_expressions)
+        .rename(
+            {
+                "Vos missions en quelques mots": "missions",
+                "Statut du poste": "job_status",
+                "Métier de référence": "profession",
+                **(
+                    {"Descriptif du service": "employeur_description"}
+                    if "Descriptif du service" in available_cols
+                    else {}
+                ),
+            }
+        )
+        .select(remove_noise_and_whitespaces)
+        .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
+    )
+
+    return wip_c
+```
+
+The pipeline uses 3 external elements:
+- 1 polars expression
+- 1 list of polars expressions
+- 1 list
+
+First the pipeline uses the list of polars expressions, essentially applying to the dataframe n expressions one after the other (this list of expression is my solution to the unpredictable header structure/ organisation of the job offers).  
+Second, we rename some varaibles using the rename function with a dynamic dictionnary to handle a specific case.  
+Third, we use the expression we saw to remove noise and whitespaces has the name suggest.  
+Fourth, we filter the dataframe to keep only a subset of variables that are specified in the list *FINAL_COLUMNS*. *require_all=False* basically allows the code to word even if the variable is missing which was the case with different structues of job offers.  
+Finally we return a Polars DataFrame.  
+
+This pipeline regroups ALL the concrete actions that modifies this dataset, the code before that is only set up.  
+Each step is clear and has a defined purpose.  
+This pipelines take 'wip' (DataFrame) as input and create 'wip_c' (DataFrame) in output. 
+Instead of creating 4 intermediate dataframes, we created expressions that do nothing unless used, like functions.  
+We chainned the methods for an all in one, easy to read and to understand code block.
+
+**Why not Pandas ?**  
+
+The answers lie is the desing phylosophy of both libraries.  
+In Pandas, we can also use methods chainning, infact, my pipeline would be very similar in pandas with mostly the same code with different function names.  
+But it is less common and not the standard for a few reasons:
+- Pandas is **eager**. Each operation is evaluated immediately, which make method chainning a harder code to debug and possible performance overhead since the output of each step is created, and reused for the next one, even if we didn't declared thoses intermediate datasets. With large datasets this is a real issue.
+- **Harder to debugg** and to understand. Since we don't create intermediate results, we can't easily inspect those results. This means that it is harder to maintain.  
+- To fit better the eager excecution, pandas works best with intermediate results.  
+
+**Why Polars is better at method chainning?**  
+- Polars has lazy excecution, this allows for query optimizations. The entire pipeline is optimize with tht polars query optimizer and thus reduce redundant computations and improves performance. Game changer for large datasets.
+- Polars encourages a declarative style of programming, where we describe what we want to do rather than how to do it. It fits better method chainning has it allows to express complex transformations concicely.
+- Polars is a newer library, written is Rust and optimized for performance, with method chainning being a fundamental part of Polars' design.
+
+My dataset is very small so eager vs lazy doesn't make a difference, so using pandas would have been has effective as polars, but the code is better written in polars in my opinion and it would be easier to adapt for huge datasets since we would only have to switch to the lazy API which is very easy to do. 
 
 
 ### Comparative assessment: When to use each approach
@@ -353,18 +487,7 @@ Cons:
 
 # Conclusions
 
-### Pros and cons of a small LLM vs Traditional string manipulations
 
-**LLM:**
-pros: 
-- Excellent for the extraction off multiple, well defined, short content
-- Easier and faster to implement
-- code is overall easy to undestand
-- bigger models would be more reliable at this task
-
-cons: 
-- requires to understand how the LLM will handle the task and some tests and retries
-- requires hardware
 
 **String manipulation:**
 pros:

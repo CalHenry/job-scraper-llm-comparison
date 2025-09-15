@@ -321,7 +321,7 @@ def clean_cols_with_expressions(
         )
 
     # Execute pipeline
-    wip_test_c = (
+    wip_c = (
         wip.with_columns(concat_expressions)
         .rename(
             {
@@ -339,7 +339,7 @@ def clean_cols_with_expressions(
         .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
     )
 
-    return wip_test_c
+    return wip_c
 
 
 ############################################################################
@@ -360,7 +360,9 @@ def main():
     if is_single_file:
         # always output as JSON, file name will be
         input_path = Path(args.input)
-        output_json = "outputs" / "compare_results" / f"polars_{input_path.name}.json"
+        compare_results_dir = Path("outputs/compare_results")
+        compare_results_dir.mkdir(parents=True, exist_ok=True)
+        output_json = compare_results_dir / f"polars_{input_path.stem}.json"
         combined_df.write_json(output_json)
 
     else:
@@ -369,7 +371,7 @@ def main():
         output_csv.parent.mkdir(
             parents=True, exist_ok=True
         )  # can create the dir if doesn't exist
-
+        print(output_csv)
         # Save as CSV
         combined_df.write_csv(output_csv)
 

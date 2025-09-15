@@ -271,13 +271,9 @@ def process_markdown_files(
 
 
 def main():
-    """Main function to run the processing."""
-
     # Configuration
-    # input_directory = "outputs/scrapping_results"
-    input_directory = "outputs/test1"
-    # output_directory = "outputs/test_out"
-    output_directory = "outputs/compare_results"
+    input_directory = "outputs/scraping_results"
+    output_directory = "outputs/test_out"
 
     # Process all files delay between files
     metadata = process_markdown_files(

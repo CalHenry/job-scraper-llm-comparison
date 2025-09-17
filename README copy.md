@@ -1,4 +1,4 @@
-# Introduction - let's find job offers
+    # Introduction - let's find job offers
 
 This is a personnal project to explore web scrapping, data retrieval, data processing and LLMs integration.
 
@@ -79,32 +79,13 @@ Furthermore, JSON is the standart data format for web content mainly for it's co
 
 Another benefit of this approach is skipping the web browser entirely from the extraction process. Since we request the server directly using an API. We save time, we don't have to deal with HTML code or scraping waste, and it's simpler to implement.
 
-With a web browser:
-
-**Browser → HTML → JavaScript → API call → Data → Populate page → Scraping → Post processing → Structured data**
-
-With bypass:
-
-**Script → API call → Structured data (same data)**
-
-Pros: 
-- fast execution
-- access directly the data in a **structured output**
-- no scrapping to do
-- significantly easier and faster to implement compared to a scrapping pipeline
-
-Cons:
-- not always possible (authentification and security)
-- need maintenance: the API can change anytime 
-- can be a grind to find the right API call that delivers the right data
-
 Disclaimer:
 
 This is not illegal: we only access the data provided in the web page using a *public API*.   
 Nevertheless, we have to respect the API's owner and not overwhelm their infrastructure and follow the **robot.txt** guidelines. In our case we do a call to get the data for each web page but it's no difference from loading a web page with the web browser so our usage of the API is very small.
 
 
-### Data processing
+## Data processing
 
 Scrapped data is processed twice to obtain the same result to compare both solutions:
 
@@ -149,52 +130,16 @@ I already know traditionnal string manipulation and that it will do the job. We 
 ### Model selection
 
 Choosing the right model can be a complicated task.  
+I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low ressources** and **offline** solution. I used Ollama with a M1pro macbook.  
 I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window.
 
-Choosing the right model can be a complicated task and testing many models takes time and ressources. I decided to select a model that had good results with no optimisation and tried to improve from here.  
+Choosing the right model can be a complicated task and testing many models takes time and ressources. I decided to select a model that had good results with no optimisations and tried to improve from here.  
 It is also important to define what we want the model to do and how.
 
 In this project we use the LLM for **content extraction** and it is particularly suited because:
 - 100% of the content to extract is in the input
 - the input is well structed with markdown headers
 - the input is <10K characters (≈22K tokens + prompt, far from the 128K tokens context limit of the model)
-
-#### LLM
-
-I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low ressources** and **offline** solution. I used Ollama with a M1pro macbook.
-
-
-- Pydantic validate the output, ensure that it suits our data structure, and guide the LLM
-
-With all this elements, the LLM's job is less prone to errors or unexpacted outputs.
-
-I tested different models of different sizes and here are my observations:
-- in very rare cases the LLM changes small words but with no impact on the meaning of the text
-- If a section is long, the LLM can stop and ignore the rest
-- Some words are misinterpreted as sections's title,
-- Some words are misinterpreted. The LLM thinks that they are another section's title, or that the word is different context from the previous lines and therefore ignore the rest of the text. I couldn't fix this behaviour with prompt engeneering.
-- Some models hallucinated part of the output despite the temperature being 0, and the prompt emphsinzing to absolutely not do that.
-- Bigger models (~7b params) didn't produce better results. I couldn't test the bigest of 'small models' (~30b params), but I suspect them do perform much better
-- LLm took between 24s and 60s to process a document
-
-**Conclusion on the LLM:**
-- The model run perfectly well with no RAM pressure on my machine and manage to do the work as intended
-- Preprocessing steps on the input are mandatory to remove the elements that would confuse the model and make it ignore part of the content
-- The model failed to extract all the content for some job offers. Usually for the longer sections (missions, profile). Some longer offers are perfectly extracted, some shorter ones not. I suspect keywords or sentences to confuse the model. The model missed the last sentence of long paragraph more than any other mistake.
-- Even if the model is not 100% reliable, the extracted content is enough for the purpuse of exploring the job offer, understanting what it is about and building a database.
-- The prompt played a smaller role than expected. I tried to run it with the minimalist prompt: 'extract the content'. It performs very well despite the lack of detailled instructions but they were more errors like summarizations or rewriting of some words. The pydantic model is probably the key element more than the prompt for my task.
-- LLM performs extremely well on the extracation of content of smaller size and processed my content at a convienient speed. 
-
-
-
-
-#### Polars expressions
-
-I did the same task than the LLM but with polars, using traditionnal string manipulation.
-
-The key part was using Polars expressions that allows to adapt to each file. Therefore we have a dynamic and understandable code that is easy to maintain.
-
-Polars expressions is one way amongs many to do this job.
 
 # Results
 
@@ -230,9 +175,7 @@ The file has the following keys:
 - datePublication (offer's publication date)
 - typeContrat (contract type, fixed or permanent)
 - contractDuration (contract's duration)
-- url
-
-
+- url  
 
 ### LLM performance:
 
@@ -351,34 +294,37 @@ Cons:
 - requires to understand how the LLM will handle the task and some tests and retries
 - requires hardware
 
+I tested different small models of different sizes and here are my observations:
+- in very rare cases the LLM changes small words but with no impact on the meaning of the text
+- If a section is long, the LLM can stop and ignore the rest
+- Some words are misinterpreted as sections's title,
+- Some words are misinterpreted. The LLM thinks that they are another section's title, or that the word is different context from the previous lines and therefore ignore the rest of the text. I couldn't fix this behaviour with prompt engeneering.
+- Some models hallucinated part of the output despite the temperature being 0, and the prompt emphsinzing to absolutely not do that.
+- Bigger models (~7b params) didn't produce better results. I couldn't test the bigest of 'small models' (~30b params), but I suspect them do perform much better
+- LLm took between 24s and 60s to process a document
+
+**Conclusion on the LLM:**
+- The model run perfectly well with no RAM pressure on my machine and manage to do the work as intended
+- Preprocessing steps on the input are mandatory to remove the elements that would confuse the model and make it ignore part of the content
+- The model failed to extract all the content for some job offers. Usually for the longer sections (missions, profile). Some longer offers are perfectly extracted, some shorter ones not. I suspect keywords or sentences to confuse the model. The model missed the last sentence of long paragraph more than any other mistake.
+- Even if the model is not 100% reliable, the extracted content is enough for the purpuse of exploring the job offer, understanting what it is about and building a database.
+- The prompt played a smaller role than expected. I tried to run it with the minimalist prompt: 'extract the content'. It performs very well despite the lack of detailled instructions but they were more errors like summarizations or rewriting of some words. The pydantic model is probably the key element more than the prompt for my task.
+- LLM performs extremely well on the extracation of content of smaller size and processed my content at a convienient speed. 
+
 
 ### String manipulation evaluation: Polars expressions approach
 
-Let's dive into the Polars expression in the function "build_concat_expressions".  
+**pros**:
+- deterministic, reliable
+- very fast execution
+- works with minimal ressources
 
+**cons**: 
+- longer to set up
+- need problem solving skills and good logic
+- need to analyse and understand the challenges of the the content to treat all the possible cases
+- complex code that is harder to maintain and to understand. The accumulation of unique cases or conditions to take into account can worsen this.  
 
-```{python}
-expr = pl.concat_str(
-                [pl.col(col) for col in existing_cols], separator="\n"
-            ).alias(alias)
-```
-
-This expressions works with polars datasets has it does modification on **multiple columns**.  
-Let's brake it down:  
-- ```pl.col()``` selects columns of the dataset
-Here we have a list comprehenssion to select all the columns from a list. This is part of the adaptative approach we used to handle the different file stuctures.
-- ```pl.concat_str(..., separator="\n")``` concatenates the content of selected columns into a single string. The serator is the element to be placed between each piece. So we basically join the content of the selected columns, and place them into a **new** variable, and we use the newline character \n to seperate each joined element in the new string.  
-- ```.alias()``` is a function to rename variables. Here it rename the variable we just have created. 
-
-So this expressions:
-- selects variables
-- concatenantes values
-- rename the created variable
-
-To use the expression we call it by it's name like a function 
-
-
----
 
 Polars expresions are ment to work with polars DataFrames.
 
@@ -446,9 +392,9 @@ Now let's see the different expressions in the final pipeline and why it is a cl
 ```
 
 The pipeline uses 3 external elements:
-- 1 polars expression
-- 1 list of polars expressions
-- 1 list
+- 1 polars expression (remove_noise_and_whitespaces)
+- 1 list of polars expressions (concat_expressions)
+- 1 list (FINAL_COLUMNS)
 
 First the pipeline uses the list of polars expressions, essentially applying to the dataframe n expressions one after the other (this list of expression is my solution to the unpredictable header structure/ organisation of the job offers).  
 Second, we rename some varaibles using the rename function with a dynamic dictionnary to handle a specific case.  
@@ -476,42 +422,50 @@ But it is less common and not the standard for a few reasons:
 - Polars encourages a declarative style of programming, where we describe what we want to do rather than how to do it. It fits better method chainning has it allows to express complex transformations concicely.
 - Polars is a newer library, written is Rust and optimized for performance, with method chainning being a fundamental part of Polars' design.
 
-My dataset is very small so eager vs lazy doesn't make a difference, so using pandas would have been has effective as polars, but the code is better written in polars in my opinion and it would be easier to adapt for huge datasets since we would only have to switch to the lazy API which is very easy to do. 
+My dataset is very small so eager vs lazy doesn't makes a difference, so using pandas would have been has effective as polars, but the code is better written in polars in my opinion and it would be easier to adapt for huge datasets since we would only have to switch to the lazy API which is very easy to do. 
 
 
 ### Comparative assessment: When to use each approach
 
+String manipulation done right returns what the user wants and allow for (unlimited) flexibility.  
+LLM have limitations and will always have a part of randomness in their output (even if this randomness has no impact).  
+---
+
+Use LLM for content extraction:
+- when the content to extract is small and easy to identify
+- when the outpout is structured
+- when the extraced content needs simple processing (summarization, translation, re-organisation)
+- when a complex task can be decomposed into smaller, simpler ones for multiples LLM to works together
+- when the hardware allows for bigger models
+
+
+Use traditional techniques:
+- when the content to process is huge. Either big files, or big groups of small files
+- when speed is a primary concern. When the excecution has to be fast/ optimized
+- when robustness is a primary concern. LLms are still black boxes that have unexpected behaviours, whereas python code can be rooted to the C implementations if it is ever needed to have a complete understanding on how the machine acts. 
+
+
 
 ### Lessons learned: Model behavior insights, preprocessing importance
+
+Small LLMs are harder to 'control' and are much more sensible to the input. If the task is a bit complex like in my use case, the model's behavior can be hard to undestand and to debugg.  
+Content's structure, punctuations, keyh words, are all elements that influence how the model will undestand the text.  
+Removing those can help the model. I took the assumption because it worked for majority of my files. But it can also worsen the performances. It comes down to the input itself and the model used. Each model has potentially a different behavior.
 
 
 # Conclusions
 
+In this project I learned about:
+- **web scrapping**, about 2 approachs among many and about good practices.
+- **content extraction from documents**, and structured outputs
+- **LLM** (small LLMs) as tools in their integration in a workflow and a data pipeline
+- **new python libraries**, to work with AI (Langchain, Pydantic), to extract content from the web (Crawl4AI), to manipulate data as DataFrames (Polars)
+- **project managment** and organisation
 
 
-**String manipulation:**
-pros:
-- deterministic, reliable
-- very fast execution
-- works with minimal ressources
+The project is successfull.  
+We manage to extract and process data from the web while testing different techniques for the extraction and the processing. We explored the pros and cons for each methods and got a better idea of when to use each and why.  
+The results proves my intuitions to be wrong. I thaugh that the LLM will be better at handling the content and that my help (the prompt, the preprocessing), could fix most of the issues.  I also thaugh that using a smaller LLM would be an avantage, that the model being simpler would tend to stay closer to the actual content and not try to prove it is smart. It turns out that it is the opposite because we trade robustness and capabilities for size and RAM usage.
 
-cons: 
-- longer to set up
-- need problem solving skills and good logic
-- need to analyse and understand the challenges of the the content to treat all the possible cases
-- complex code that is harder to maintain and to understand. The accumulation of unique cases or conditions to take into account can worsen this.
-
-
-
----
-gathering job offers from different websites to have an automated way of finding new job offers. Data ends up in a single csv files that can be explored (!TODO - dashboard or APP)
-
-We explore different ways of retreiving the data: - webscrapping - API calls
-
-We explore different ways of processing the extracted data: - with LangChain using an small LLM that runs locally - with traditionnal string manipulation with *Polars*
-
-We discuss the pro and cons of each approachs and why we use them.
-
-Main libraries used: - Polars - LangChain - Crawl4ai - Pydantic
-
-(real data, simple, interesting and usefull, expendable)
+The project could be extented with a visualization tool of the dataset to explore the job offers content in a better way.  
+I could add tests, more monotoring and evaluation of my code. We could have a number on the Polars actual performances on the content extraction, a number on the fails of the LLM. We could have small descriptive statistics at the offer level or at the global level to understand and assess better which approach is better and why.

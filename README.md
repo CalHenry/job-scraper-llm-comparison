@@ -100,7 +100,7 @@ Furthermore, JSON is the standard data format for web content mainly for its com
 
 Another benefit of this approach is skipping the web browser entirely from the extraction process. Since we request the server directly using an API. We save time, we don't have to deal with HTML code or scraping waste, and it's simpler to implement.
 
->[!DISCLAIMER]:
+>DISCLAIMER:
 >
 >This is not illegal: we only access the data provided in the web page using a *public API*.   
 >Nevertheless, we have to respect the API's owner and not overwhelm their infrastructure and follow the **robots.txt** guidelines. In our case we do a call to get the data for each web page but it's no different from loading a web page with the web browser so our usage of the API is very small.

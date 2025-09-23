@@ -321,7 +321,7 @@ def clean_cols_with_expressions(
         )
 
     # Execute pipeline
-    wip_c = (
+    final_df = (
         wip.with_columns(concat_expressions)
         .rename(
             {
@@ -339,7 +339,7 @@ def clean_cols_with_expressions(
         .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
     )
 
-    return wip_c
+    return final_df
 
 
 ############################################################################

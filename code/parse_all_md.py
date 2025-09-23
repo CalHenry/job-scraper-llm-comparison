@@ -196,7 +196,6 @@ def process_markdown_files(
 ) -> List[Dict]:
     """
     Process all markdown files in a directory one at a time.
-    Returns a
     """
     # Setup paths
     input_path = Path(input_dir)
@@ -273,7 +272,7 @@ def process_markdown_files(
 def main():
     # Configuration
     input_directory = "outputs/scraping_results"
-    output_directory = "outputs/test_out"
+    output_directory = "outputs/json_files/llm_output"
 
     # Process all files delay between files
     metadata = process_markdown_files(

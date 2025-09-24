@@ -151,5 +151,9 @@ cython_debug/
 .md
 
 # ignore data folders
-/outputs/
+/data/** */
+
+!data/.gitkeep
+!data/**/.gitkeep
+
 /tests/

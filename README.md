@@ -1,4 +1,4 @@
-# Introduction - Let's find job offers
+# Let's find job offers
 
 This is a personal project to explore web scraping, data retrieval, data processing and LLM integration.
 
@@ -43,7 +43,7 @@ We will process and extract the data from the offers with 2 approaches:
 - Interest for web scrapping.  
 - Understanding of LLMs (prompt engineering, structured outputs).  
 
-> *The ultimate goal of the project is to learn more and practice.*
+> *The ultimate goal of the project is to learn and practice.*
 
 # Methodology
 
@@ -117,7 +117,7 @@ To work with LLMs we need:
 
 - a tool to download and manage LLMs on our machine: **[Ollama](https://ollama.com)** is an open source project to work with LLMs locally.
 
-- local hardware: Since the Apple Silicon chips, MacBooks can run smaller LLMs with very good speed, efficiency and performance. All together we have a solution that is free, unlimited and offline. 
+- local hardware: Since the Apple Silicon chips, MacBooks can run smaller LLMs with very good speed, efficiency and performance. All together we have a solution that is free, only limited by the hardware and offline. 
 
 - software to work with LLM: **LangChain** is the reference and **Pydantic** is now also the reference when working with LLM. When using those 2 libraries, we can build a chain that uses an LLM and that will produce a structured output that will be validated with Pydantic.
 
@@ -139,15 +139,15 @@ Expressions also allow Polars to evaluate the code before running it, allowing f
 
 To sum up, we have cleaner, optimized and efficient code, that is easier to understand and to maintain.
 
-Both outputs will be in JSON format for easy comparison.
 
-I already know traditional string manipulation and that it will do the job. We will see if the LLM can be a solution as well.
+I'm already familiar with traditional string manipulation and know it would work. We will see if the LLM can be a solution as well, both outputs will be in JSON format for easy comparison.
 
 ### Model selection
 
 Choosing the right model can be a complicated task.  
 I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low resources** and **offline** solution. I used Ollama with an M1 Pro MacBook.  
-I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window.
+I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window.  
+(Under Apache 2.0 license)
 
 Choosing the right model can be a complicated task and testing many models takes time and resources. I decided to select a model that had good results with no optimizations and tried to improve from there.  
 It is also important to define what we want the model to do and how.
@@ -155,7 +155,7 @@ It is also important to define what we want the model to do and how.
 In this project we use the LLM for **content extraction** and it is particularly suited because:
 - 100% of the content to extract is in the input
 - the input is well structured with markdown headers
-- the input is <10K characters (≈ 22K tokens + prompt, far from the 128K tokens context limit of the model)
+- the input is <10K characters (≈ 2200 tokens + prompt, far from the 128K tokens context limit of the model)
 
 # Results
 
@@ -203,11 +203,6 @@ The file has the following keys:
 - The model was able to process the markdown files and return a valid JSON output.
 - It took between 25s and 60s to process a file
 - The hardware handled it fine and the RAM pressure was kept in the green, meaning that some remained free.
-
-Accuracy observations:
-- in very rare cases the LLM changes small words but with no impact on the meaning of the text
-- If a section is long, the LLM can stop and ignore the rest
-- Some words are misinterpreted or interpreted as section titles leading the LLM to stop the extraction for a given key
 
 ### Polars processing:
 
@@ -316,28 +311,39 @@ With bypass:
 - Excellent for the extraction of multiple, well defined, short content
 - Easier and faster to implement
 - code is overall easy to understand
-- bigger models would be more reliable at this task
+- larger (small) models would be better at this task
 
 ❌ **Cons**: 
 - requires understanding how the LLM will handle the task and some tests and retries
 - requires hardware
+- potential unexpected output or behaviour
 
 I tested different small models of different sizes and here are my observations:
-- in very rare cases the LLM changes small words but with no impact on the meaning of the text
+
+In very rare cases the LLM changes small words but with no impact on the meaning of the text
 - If a section is long, the LLM can stop and ignore the rest
-- Some words are misinterpreted as section titles,
-- Some words are misinterpreted. The LLM thinks that they are in another section's title, or that the word is in a different context from the previous lines and therefore ignores the rest of the text. I couldn't fix this behavior with prompt engineering.
+- Some words are misinterpreted as section titles
+- Some words are misinterpreted as being in another section's title, or in a different context from the previous lines, causing the model to ignore the rest of the text. I couldn't fix this behavior with prompt engineering.
 - Some models hallucinated part of the output despite the temperature being 0, and the prompt emphasizing to absolutely not do that.
 - Bigger models (~7b params) didn't produce better results. I couldn't test the biggest of 'small models' (~30b params), but I suspect them to perform much better
 - LLM took between 24s and 60s to process a document
 
+My takes on why the LLM fails:
+- **Generation constraints**: the model failing regarding the size of the document might imply that the issue is not the document size but the total output length
+- **Context processing limits**: the model might not catch all the context, be confused by or misinterpret some elements as section titles or boundaries
+- **Instruction compliance**: the model rewrote some words and did hallucinate some sentences when similar elements were found in other parts of the document. I interpreted it as the model 'merging' all the close information under a single key.
+
+We find here 3 caveats of small LLMs. We observe the limitations of the model itself. It is probably possible to improve my results further but the better answer to this is probably to use a larger model.
+
 **Conclusion on the LLM:**
+
 - The model ran perfectly well with no RAM pressure on my machine and managed to do the work as intended
-- Preprocessing steps on the input are mandatory to remove the elements that would confuse the model and make it ignore part of the content
-- The model failed to extract all the content for some job offers. Usually for the longer sections (missions, profile). Some longer offers are perfectly extracted, some shorter ones are not. I suspect keywords or sentences to confuse the model. The model missed the last sentence of long paragraphs more than any other mistake.  
-- Even if the model is not 100% reliable, the extracted content is enough to explore the job offer, its details and build a database.
-- The prompt played a smaller role than expected. I tried to run it with the minimalist prompt: 'extract the content'. It performs very well despite the lack of detailed instructions but there were more errors like summarizations or rewriting of some words. From my testing the Pydantic model is probably more important than the prompt for the model.
-- LLM performs extremely well on the extraction of content of smaller size and processed my content at a convenient speed. 
+- Preprocessing steps on the input are mandatory to remove elements that would confuse the model
+- The model failed to extract all content for some job offers, usually for longer sections (missions, profile). The model missed the last sentence of long paragraphs more than any other mistake.
+- Even if the model is not 100% reliable, the extracted content is enough to explore the job offer and build a database.
+- The prompt played a smaller role than expected. The minimalist prompt 'extract the content' performs very well despite lack of detailed instructions but with more errors like summarizations. The Pydantic model is probably more important than the prompt.
+- LLM performs extremely well on extraction of smaller content at convenient speed.
+- The small nature of the model is likely a major issue if the objectif is a perfect result
 
 ### String manipulation evaluation: Polars expressions approach
 
@@ -459,7 +465,7 @@ Use LLM for content extraction:
 - when the output is structured
 - when the extracted content needs simple processing (summarization, translation, re-organization)
 - when a complex task can be decomposed into smaller, simpler ones for multiple LLMs to work together
-- when the hardware allows for bigger models
+- when the hardware allows for larger models
 
 Use traditional techniques:
 - when the content to process is huge. Either big files, or big groups of small files

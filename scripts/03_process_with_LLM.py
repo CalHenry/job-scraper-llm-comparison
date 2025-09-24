@@ -4,9 +4,9 @@ from src.ai_scrapper_jobmarket.llm_processor import (
 
 
 def main():
-    # Configuration
-    input_directory = "outputs/scraping_results"
-    output_directory = "outputs/json_files/llm_output"
+    # config
+    input_directory = "data/raw/scraped_pages"
+    output_directory = "data/processed/json/llm_output"
 
     # Process all files delay between files
     metadata = process_markdown_files(

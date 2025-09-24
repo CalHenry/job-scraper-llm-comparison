@@ -13,15 +13,15 @@ def parse_arguments():
         "--input",
         "-i",
         type=str,
-        default="outputs/csv_files",
-        help="Input path: either a directory containing .md files or a single .md file (default: outputs/test1)",
+        default="data/processed/csv_files",
+        help="Input path: either a directory containing .md files or a single .md file (default=data/processed/csv_files)",
     )
     parser.add_argument(
         "--output",
         "-o",
         type=str,
-        default="outputs/csv_files/polars_offer.csv",
-        help="Output JSON file path (default: outputs/json_files/polars_offer_3.json)",
+        default="data/processed/csv_files/polars_offer.csv",
+        help="Output JSON file path (default=data/processed/csv_files/polars_offer.csv)",
     )
     parser.add_argument(
         "--json",

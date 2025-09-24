@@ -181,7 +181,7 @@ def main():
     if is_single_file:
         # always output as JSON
         input_path = Path(args.input)
-        compare_results_dir = Path("outputs/compare_results")
+        compare_results_dir = Path("data/compare_results")
         compare_results_dir.mkdir(parents=True, exist_ok=True)
         output_json = compare_results_dir / f"polars_{input_path.stem}.json"
         combined_df.write_json(output_json)

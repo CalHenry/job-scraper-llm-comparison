@@ -43,7 +43,7 @@ page_index = 0
 
 base_url = "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail-offre/{id}W?motsCles=data%20scientist&salaireMinimum=20&salaireMaximum=200&typesContrat=101887&typesConvention=143684&typesConvention=143685&typesConvention=143686&typesConvention=143687&typesConvention=143706&selectedIndex=1&page=0"
 
-save_path = "outputs/json_files/APEC_offers.json"
+save_path = "data/processed/json/APEC_offers.json"
 
 
 def main():

@@ -14,7 +14,7 @@
 # ignore data folders
 data/**/*
 # But keep all .gitkeep files
-!data/**/.gitkeep
+!data/*/*/.gitkeep
 
 /tests/
 /figures/

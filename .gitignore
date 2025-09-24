@@ -12,9 +12,14 @@
 .md
 
 # ignore data folders
-data/**/*
+#data/**/*
 # But keep all .gitkeep files
-!data/*/*/.gitkeep
+#!data/*/*/.gitkeep
+data/*
+!data/.gitkeep
+
+data/raw/*
+!data/raw/.gitkeep
 
 /tests/
 /figures/

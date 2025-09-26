@@ -16,7 +16,7 @@ data/**/**
 data/json_files/
 data/csv_files/
 
-scripts/tests
+scripts/tests/
 /figures/
 
 

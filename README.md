@@ -291,74 +291,6 @@ This is one of the clearer example of the LLM failures. In most offers, the diff
 
 ## 🔎 Analysis<a name="analysis"></a>
 
-### Why Pydantic is Essential to our codebase
-
-**Pydantic's validation is a gatekeeper:**  
-It transforms, validates and sanitizes all incoming data.
-- **Transforms** - Converts raw data types into proper Python objects (e.g. here it's JSON data types)
-- **Validates** - Checks that data meets defined rules and constraints (e.g. number is within valid range, required fields are present). All validation rules are declaratively defined in the Pydantic models  
-- **Sanitizes** - Cleans and normalizes data to remove undefined fields or potential issues (e.g., strips whitespace, ensures consistent formatting, deal with null values)  
-
-**Key benefits:**  
-This prevent entire classes of bugs and data corruption issues.
-Furthermore, everything is defined in the model(s) so it's easy to undertand, modify, update and document.  
-We also don't have to write cumbersome data validation code.  
-
-We use Pydantic for the LLM twice:
-
-- create the structured output schema for the LLM to follow (it's just a pydantic model). It helps substantially the LLM.
-- to validate the LLM's output  
-
-### 🌐 How browsers work:
-
-The **web browser** is the core application of modern web browsing. It is the gateway to the internet for 99% of people and is one of the elements that makes the modern web. It is also the most used application on computers and nowadays almost everything can be done on the internet therefore with a web browser.
-
-Web pages are built from multiple components that work together. 
-- **HTML** provides the structure
-- **CSS** files define the visual styling (how the page looks)
-- **JavaScript** files add interactivity and dynamic behavior. 
-- more static resources like images.
-
-HTML and CSS are static. They load quickly and provide the visual foundation. JavaScript is dynamic. It enables all the interactive features and real-time content updates that make modern websites.
-
-When a user accesses a website:
-
-1. Browser requests the page: Sends a **GET request** to the server
-2. Server responds with HTML: Returns the basic page structure (often empty) and links to other resources
-3. Browser downloads resources: Fetches CSS files, JavaScript files, and images in parallel
-4. Browser renders the page: Applies CSS styling to create the visual layout
-5. JavaScript executes: Runs code that makes API calls to fetch actual data
-6. Dynamic content loads: JavaScript processes API responses and populates the empty page with real content
-7. Page becomes fully interactive with all the dynamic features
-
-If we use the **browser's devtools** network panel, we can inspect the traffic between the browser and the server.
-
-If the API is straightforward, visible in the network traffic and has minimal authentication, we can extract the request as a cURL command using the devtools.
-
-We can use the elements of the cURL command to create a Python script to extract the data we want in the format we want. (Although this could be even more straightforward (and simpler) with command line scripting, but as a data scientist, I love Python and will use it)
-
-When using a web browser we **have to** access the web through the browser interface. While this makes the web usable for the majority of people, it is a constraint when the goal is simply to catch and store the content in a file. In this approach we bypass the browser part to access the data directly.
-
-With a web browser:
-
-**Browser → HTML → JavaScript → API call → Data → Populate page**
-
-With bypass:
-
-**Script → API call → Data (same data)**
-
-
-✅ **Pros**: 
-- fast execution
-- access directly the data as **structured output**
-- no scraping to do
-- significantly easier and faster to implement compared to a scraping pipeline
-
-❌ **Cons:**
-- not always possible (authentication and security)
-- needs maintenance: the API can change
-- can be challenging to find the right API call that delivers the right data
-
 ### LLM evaluation: failure patterns, pros and cons
 
 ✅ **Pros**: 
@@ -547,6 +479,74 @@ Use traditional techniques:
 Small LLMs are harder to 'control' and are much more sensitive to the input. If the task is a bit complex like in my use case, the model's behavior can be hard to understand and to debug.  
 Content structure, punctuation, keywords, are all elements that influence how the model will understand the text.  
 Removing those can help the model. I made this assumption because it worked for the majority of my files, but it can also worsen the performance. It comes down to the input itself and the model used. Each model has potentially different behavior.
+
+### Why Pydantic is Essential
+
+**Pydantic's validation is a gatekeeper:**  
+It transforms, validates and sanitizes all incoming data.
+- **Transforms** - Converts raw data types into proper Python objects (e.g. here it's JSON data types)
+- **Validates** - Checks that data meets defined rules and constraints (e.g. number is within valid range, required fields are present). All validation rules are declaratively defined in the Pydantic models  
+- **Sanitizes** - Cleans and normalizes data to remove undefined fields or potential issues (e.g., strips whitespace, ensures consistent formatting, deal with null values)  
+
+**Key benefits:**  
+This prevent entire classes of bugs and data corruption issues.
+Furthermore, everything is defined in the model(s) so it's easy to undertand, modify, update and document.  
+We also don't have to write cumbersome data validation code.  
+
+We use Pydantic for the LLM twice:
+
+- to create the structured output schema for the LLM to follow (it's just a pydantic model). It helps substantially the LLM.
+- to validate the LLM's output  
+
+### 🌐 How browsers work:
+
+The **web browser** is the core application of modern web browsing. It is the gateway to the internet for 99% of people and is one of the elements that makes the modern web. It is also the most used application on computers and nowadays almost everything can be done on the internet therefore with a web browser.
+
+Web pages are built from multiple components that work together. 
+- **HTML** provides the structure
+- **CSS** files define the visual styling (how the page looks)
+- **JavaScript** files add interactivity and dynamic behavior. 
+- more static resources like images.
+
+HTML and CSS are static. They load quickly and provide the visual foundation. JavaScript is dynamic. It enables all the interactive features and real-time content updates that make modern websites.
+
+When a user accesses a website:
+
+1. Browser requests the page: Sends a **GET request** to the server
+2. Server responds with HTML: Returns the basic page structure (often empty) and links to other resources
+3. Browser downloads resources: Fetches CSS files, JavaScript files, and images in parallel
+4. Browser renders the page: Applies CSS styling to create the visual layout
+5. JavaScript executes: Runs code that makes API calls to fetch actual data
+6. Dynamic content loads: JavaScript processes API responses and populates the empty page with real content
+7. Page becomes fully interactive with all the dynamic features
+
+If we use the **browser's devtools** network panel, we can inspect the traffic between the browser and the server.
+
+If the API is straightforward, visible in the network traffic and has minimal authentication, we can extract the request as a cURL command using the devtools.
+
+We can use the elements of the cURL command to create a Python script to extract the data we want in the format we want. (Although this could be even more straightforward (and simpler) with command line scripting, but as a data scientist, I love Python and will use it)
+
+When using a web browser we **have to** access the web through the browser interface. While this makes the web usable for the majority of people, it is a constraint when the goal is simply to catch and store the content in a file. In this approach we bypass the browser part to access the data directly.
+
+With a web browser:
+
+**Browser → HTML → JavaScript → API call → Data → Populate page**
+
+With bypass:
+
+**Script → API call → Data (same data)**
+
+
+✅ **Pros**: 
+- fast execution
+- access directly the data as **structured output**
+- no scraping to do
+- significantly easier and faster to implement compared to a scraping pipeline
+
+❌ **Cons:**
+- not always possible (authentication and security)
+- needs maintenance: the API can change
+- can be challenging to find the right API call that delivers the right data
 
 ----
 

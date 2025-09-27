@@ -89,9 +89,9 @@ This pixi task:
 
 3. **Run the scripts**:
 
-    From the root of the project:
+    From the root of the project, run this to run the first script, or change the number for the 4 others scripts (5 total)
    ```bash
-   pixi run python scripts/01_extract_job_offers_links.py
+   pixi run script_01
    ```
     I advice to run the scripts one by one.
 
@@ -109,7 +109,7 @@ This pixi task:
     ollama_llm = OllamaLLM(
         model="qwen2.5:3b",
     ```
-    
+
 ----
 
 ## 🔬 Methodology<a name="methodology"></a>

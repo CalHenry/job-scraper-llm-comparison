@@ -9,17 +9,18 @@ dependencies = [
     "crawl4ai>=0.7.4,<0.8",
     "nest-asyncio>=1.6.0,<2",
     "langchain-ollama>=0.3.6,<0.4",
-    "curl-cffi>=0.13.0,<0.14",
-    "lmstudio>=1.5.0,<2",
 ]
 
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
+[tool.hatch.build.targets.wheel] # so src is recognized as a package
+packages = ["src"]
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["osx-arm64"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
 
 [tool.pixi.pypi-dependencies]
 ai_scrapper_jobmarket = { path = ".", editable = true }
@@ -29,7 +30,7 @@ create_virtual_env = "pixi install"
 create_data_folder = { cmd = [
     "bash",
     "-c",
-    "mkdir -p dataaa/{compare_results,processed/{csv,json/llm_output},raw/{links,scraped_pages}}",
+    "mkdir -p data/{compare_results,processed/{csv,json/llm_output},raw/{links,scraped_pages}}",
 ] }
 crawl4ai = "crawl4ai-setup"
 
@@ -39,9 +40,14 @@ setup = { depends-on = [
     "crawl4ai",
 ] }
 
+script_01 = "pixi run python scripts/01_extract_job_offers_links.py"
+script_02 = "pixi run python scripts/02_extract_job_offers_content.py"
+script_03 = "pixi run python scripts/03_process_with_LLM.py"
+script_04 = "pixi run python scripts/04_process_with_polars.py"
+script_05 = "pixi run python scripts/05_extract_job_offers_APEC.py"
 
 [tool.pixi.dependencies]
 polars = ">=1.32.3,<2"
 langchain-core = ">=0.3.74,<0.4"
 langchain = ">=0.3.27,<0.4"
-transformers = ">=4.56.0,<5"
+cssselect = ">=1.3.0,<2"

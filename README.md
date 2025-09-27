@@ -277,13 +277,13 @@ To compare the differences between the LLM's output and Polars's output, I used 
 Let's detail the git diff.  
 
 **1.** Content is the same for both as well as small differences that don't have a major impact on the meaning.  
-![small_diff_and_normal](data/compare_results/small_diff_and_normal.png)  
+![small_diff_and_normal](screenshots/small_diff_and_normal.png)  
 
 **2.** Major issues from the LLM: missing blocks of content from the bigger sections: Missions. The big red part is not found in the LLM output.  
-![missing_content](data/compare_results/missing_content_missions.png)   
+![missing_content](screenshots/missing_content_missions.png)   
  
 **3.** the LLM sometimes simplifies the information and thus misses some of the content.   
-![simplification_content_and_missed](data/compare_results/simplification_content_and_missed.png)  
+![simplification_content_and_missed](screenshots/simplification_content_and_missed.png)  
 
 This is one of the clearer example of the LLM failures. In most offers, the differences are in small words or sentences that are slightly different or punctuation.
 

@@ -10,6 +10,7 @@
 - [Results](#results)
 - [Analysis](#analysis)
 - [Conclusion](#conclusion)
+- [License](#license)
  
  ----
 
@@ -37,12 +38,13 @@ We will process and extract the data from the offers with 2 approaches:
 
 **Environment Requirements:**
 - **Python 3.11+**
-- **Ollama** to run LLM locally
+- **Ollama** to run LLM locally ([Download Ollama](https://ollama.com/download))
 
 **Key Libraries:**
 - **[Crawl4AI](https://github.com/unclecode/crawl4ai)** for web scraping
 - **[LangChain](https://www.langchain.com/langchain)** and **[Pydantic](https://docs.pydantic.dev/latest/why/)** for LLM integration and output validation
-- **[Polars](https://github.com/pola-rs/polars)** for data manipulation using DataFrames and modern syntax
+- **[Polars](https://github.com/pola-rs/polars)** for data manipulation using DataFrames and modern syntax  
+
 **Hardware**
 
 - A machine with a GPU or a modern laptop with an integrated GPU (e.g. Apple Silicon M1pro).  
@@ -56,19 +58,18 @@ We will process and extract the data from the offers with 2 approaches:
 
 ### ✅ Setup and Instructions <a name="setup"></a>
 
-To set up the project locally, follow these steps:
-
 1. **Clone the Repository**:
-
    ```bash
    git clone https://github.com/CalHenry/job-scraper-llm-comparison.git
-   cd job-scraper-llm-comparison
    ```
 
+2. **Change to the project directory**:
+   ```bash
+   cd job-scraper-llm-comparison
+   ```
+3. **Set up the virtual environment with Pixi**:
 
-2. **Set up the virtual environment with Pixi**:
-
-If you don't have [Pixi](https://pixi.sh/dev/installation/): 
+    If you don't have [Pixi](https://pixi.sh/dev/installation/): 
    ```bash 
    # Unix: (or with Homebrew)
     curl -fsSL https://pixi.sh/install.sh | sh
@@ -77,7 +78,7 @@ If you don't have [Pixi](https://pixi.sh/dev/installation/):
     powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"
    ```
 
-Use the following pixi task:
+    If you already have pixi, run the following pixi task:
    ```bash
    pixi run setup
    ```
@@ -89,16 +90,14 @@ This pixi task:
 
 3. **Run the scripts**:
 
-In the terminal:
+    In the terminal, from the root of the project:
    ```bash
-   pixi run python 01_...
-   pixi run python 02_...
-   ...
+   pixi run python scripts/01_extract_job_offers_links.py
    ```
 I advice to run the scripts one by one to make sure that all is working fine. 
 
-What is pixi and why use it ?
-(why pixi ?*Pixi is a modern virtual environment manager for Conda env*  )
+
+(*Pixi is a modern virtual environment manager for Conda. It simplifies dependency management for both Conda and PyPI packages and supports ```pyproject.toml``` along with other nice features. (it's a turbocharged conda with PyPI superpowers thanks to UV*)
 
 ----
 
@@ -146,7 +145,7 @@ The goal is to have a command with the right filters, to get only the data we wa
 
 If the API is straightforward, visible in the network traffic and has minimal authentication, finding the elements we need is very easy.
 
-Here is the **POST** request that contains our data and to the right the **Response** panel indeed shows the data.  
+Here is the **POST** request that contains our data and to the right the **Response** panel shows the data.  
 ![devtools_CURL](screenshots/request.png)  
 
 Getting the **cURL** command is as easy as that:  
@@ -159,8 +158,8 @@ Another benefit of this approach is skipping the web browser entirely from the e
 
 >DISCLAIMER:
 >
->This is not illegal: we only access the data provided in the web page using a *public API*.   
->Nevertheless, we have to respect the API's owner and not overwhelm their infrastructure and follow the **robots.txt** guidelines. In our case we do a call to get the data for each web page but it's no different from loading a web page with the web browser so our usage of the API is very small.
+>This is not illegal: we only access the data provided to the web page using a *public API*.   
+>Nevertheless, we have to respect the API's owner and not overwhelm their infrastructure and follow the **robots.txt** guidelines. In our case we do a call to get the data for each web page and it's no different from loading a web page with the web browser so our usage of the API is very normal.
 
 ### ⚙️ Data processing
 
@@ -182,27 +181,15 @@ To work with LLMs we need:
 
 Our inputs are markdown files that are basically structured text. Therefore using string manipulations and regex patterns, we can shape them to become structured data like a CSV or a JSON file .
 
-We will use DataFrames for efficient processing and **Polars** provides a great API to work with strings and DataFrames. 
+We will use DataFrames for efficient processing.
 
-We want a tidy dataframe:
+We want a **Tidy** dataframe:
 - a row for each offer
 - a column for each information  
 
-Polars is great at string operations through its expression API, which allows vectorized, optimized transformations on entire columns (or rows) at once. These expressions act like reusable functions: customizable, nameable, thus applicable to multiple datasets.
+**Polars** is great at string operations through its expression API, which allows vectorized, optimized transformations on entire columns (or rows) at once. These expressions act like reusable functions: customizable, nameable, thus applicable to multiple datasets.
 
-We can then create a pipeline that uses the expressions.
-
-For example:   
-Instead of a single block of code that chains 20 actions, we have a block that uses 4 expressions of 5 actions, that are named after what they do. Our pipeline can almost be read like a sentence.   
-This approach also limits the number of intermediate outputs that load the RAM and makes the code harder to maintain.  
-Expressions also allow Polars to evaluate the code before running it, allowing for optimization for faster and more efficient code.
-
-Instead of a single code block of 20 sequential operations—we break transformations into modular expressions (e.g., 4 named expressions, each handling 5 actions). It is:
-- **Readable as text**: The pipeline becomes self-documenting, with each expression’s name reflecting its purpose.
-- **Reduces overhead**: Fewer intermediate outputs mean lower memory usage and simpler maintenance.
-- **Enables optimization**: Polars pre-evaluates expressions, allowing for lazy execution—compiling operations into efficient, vectorized steps before runtime.
-
-**Result**: Cleaner, faster, and more maintainable code that can scales easily.
+We can then chain operations in a pipeline that uses the expressions.
 
 I'm already familiar with traditional string manipulation and know it would work even if the solution is cumbersome and complex. We will see if an LLM can be a solution and be competitive, both outputs will be in JSON format for easy comparison.
 
@@ -210,8 +197,7 @@ I'm already familiar with traditional string manipulation and know it would work
 
 Choosing the right model can be a complicated task.  
 I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low resources** and **offline** solution. I used Ollama with an M1 Pro MacBook.  
-I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window.  
-(Under Apache 2.0 license)
+I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window (Under Apache 2.0 license).  
 
 Choosing the right model can be a complicated task and testing many models takes time and resources. I decided to select a model that had good results with no optimizations and tried to improve from there.  
 It is also important to define what we want the model to do and how.
@@ -514,21 +500,29 @@ We chained the methods for an all-in-one, easy to read and clear code block.
 
 **Why not Pandas?**  
 
-Short answer: personal preferences. 
+**Short answer**: personal preferences. 
 
-Long answser: the design philosophy of both libraries.  
-In Pandas, we can also use method chaining, in fact, my pipeline would be very similar in Pandas with mostly the same code with different function's names.  
-But it is less common and not the standard for a few reasons:
+**Long answser**: the design philosophy of both libraries.   
+
+In Pandas, we can also use method chaining, in fact, my pipeline would be very similar with mostly the same code with different function's names. However, it's less common and not the standard for several reasons:  
 - Pandas is **eager**. Each operation is evaluated immediately with can result in a performance overhead since the output of each step is created, stored in memory and reused for the next action, even if we didn't declare those intermediate outputs. With large datasets this becomes a real issue.  
 - **Harder to debug** and to understand. Since we don't create intermediate results, we can't easily inspect those results. This means that it is harder to maintain.  
 - To fit better the eager execution, Pandas works best with intermediate results.  
 
-**Why Polars is better at method chaining?**  
-- Polars has lazy execution, this allows for query optimizations. The entire pipeline is optimized with the Polars query optimizer and thus reduces redundant computations and improves performance. Game changer for large datasets.
-- Inspired by the amazing [Tidyverse](https://medium.com/@temiloluwa.jokotola/tidyverse-vs-pandas-numpy-who-really-cleans-up-your-data-mess-681df1300d28), Polars encourages a declarative style of programming, where we describe what we want to do rather than how to do it. It fits better method chaining as it allows expressing complex transformations concisely.
-- Polars is a newer library, written in Rust and optimized for performance, with method chaining being a fundamental part of Polars' design.
+**Why Polars excels at method chaining:**
 
-My dataset is very small so eager vs lazy doesn't make a difference. Using Pandas would have been as effective as Polars, but the code is better written in Polars in my opinion and it would be easier to adapt for huge datasets since we would only have to switch to the lazy API which is very easy to do. 
+- **Lazy execution** enables query optimization. The entire pipeline is optimized by Polars' query optimizer, reducing redundant computations and improving performance—a game changer for large datasets.
+- **Declarative programming style** inspired by [Tidyverse](https://medium.com/@temiloluwa.jokotola/tidyverse-vs-pandas-numpy-who-really-cleans-up-your-data-mess-681df1300d28). we describe what we want to do rather than how to do it, making method chaining more natural for expressing complex transformations concisely.
+- **Built for chaining**: Polars is a newer library, written in Rust and optimized for performance, with method chaining being a fundamental part of Polars' design.
+
+While my small dataset makes eager vs lazy execution irrelevant, Polars produces cleaner code that easily scales to larger datasets by simply switching to the lazy API.
+The expression advantage: Instead of chaining 20 sequential operations, I break transformations into modular expressions (e.g., 4 named expressions of 5 actions each). This approach:
+
+- **Reads like documentation** - Each expression's name reflects its purpose
+- **Reduces memory overhead** - Fewer intermediate outputs mean lower RAM usage
+- **Enables optimization** - Polars pre-evaluates expressions for efficient, vectorized execution
+
+**Result**: Cleaner, faster, more maintainable code that scales effortlessly.
 
 ### ⚖️ When to use each approach  
 
@@ -579,5 +573,9 @@ This project could be further improved by:
 - descriptive statistics at the offer level and at the global level to understand and assess better which approach performs best
 - an application to consul the extracted offers and have a complete workflow from raw data to real usage
 
+----
 
----
+## 🛡️ License <a name="license"></a>
+Project is distributed under [MIT License](https://github.com/CalHenry/job-scraper-llm-comparison/blob/main/LICENSE)
+
+----

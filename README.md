@@ -16,8 +16,10 @@
 ## 📌 Overview <a name="overview"></a>
 This is a personal project to explore web scraping, data retrieval, data processing and LLM integration.
 
-The project's goals are to get an automated way of collecting new job offers, use different methods to scrape data, use LLM for information extraction and check if it is reliable.
-
+Project's goals:
+- get an automated way of collecting new job offers, 
+- use different methods to scrape data, 
+- use LLM for information extraction and check if it is reliable.
 - Discover the scraping library **Crawl4AI**
 - Use **LangChain** and **Pydantic** to monitor and validate the LLM's output
 - Use the amazing **Polars** expressions
@@ -47,7 +49,7 @@ We will process and extract the data from the offers with 2 approaches:
 **Hardware**
 
 - A machine with a GPU or a modern laptop with an integrated GPU (e.g. Apple Silicon M1pro).  
-- 16 GB of RAM.
+- 16GB of RAM or more.
 
 **Knowledge**
 
@@ -68,16 +70,17 @@ In the terminal:
    ```
 3. **Set up the virtual environment with Pixi**:
 
-    If you don't have [Pixi](https://pixi.sh/dev/installation/): 
-   ```bash 
-   # Unix: (or with Homebrew for Macos)
-    curl -fsSL https://pixi.sh/install.sh | sh
+    >    If you don't have [Pixi](https://pixi.sh/dev/installation/): 
+    >   ```bash 
+    >   # Unix:
+    >    curl -fsSL https://pixi.sh/install.sh | sh
+    >
+    >   # Windows:
+    >    powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"
+    >   ```
+    > (Macos users can also use Homebrew)
 
-   # Windows:
-    powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"
-   ```
-
-    Once you have pixi, run the following pixi task:
+    Once you have pixi, run the following task:
    ```bash
    pixi run setup
    ```
@@ -89,13 +92,13 @@ This pixi task:
 
 3. **Run the scripts**:
 
-    From the root of the project, run this to run the first script, or change the number for the 4 others scripts (5 total)
+    From the root of the project, use this command to run any script from 1 to 5.
    ```bash
    pixi run script_01
    ```
-    I advice to run the scripts one by one.
+    I advice to run the scripts one by one and to check the content added in the data folder.
 
-(*Pixi is a modern virtual environment manager for Conda. It simplifies dependency management for both Conda and PyPI packages and supports ```pyproject.toml``` along with other nice features. (it's a turbocharged conda with PyPI superpowers thanks to UV*)
+> (*Pixi is a modern virtual environment manager for Conda. It simplifies dependency management for both Conda and PyPI packages and supports ```pyproject.toml``` along with other nice features. (it's a turbocharged conda with PyPI superpowers thanks to UV*)
 
 4. **Configure the LLM**
 
@@ -186,11 +189,11 @@ To work with LLMs we need:
 
 - local hardware: Since the Apple Silicon chips, MacBooks can run smaller LLMs with very good speed, efficiency and performance. All together we have a solution that is free, only limited by the hardware and offline. 
 
-- software to work with LLM: **LangChain** is the reference and **Pydantic** is now also the reference when working with LLM. When using those 2 libraries, we can build a chain that uses an LLM and that will produce a structured output that will be validated with Pydantic.
+- softwares to work with LLM: **LangChain** is the reference and **Pydantic** is now also the reference when working with LLM. When using those 2 libraries, we can build a chain that uses an LLM and that will produce a structured output that will be validated with Pydantic.
 
 2. With **traditional string manipulation** 
 
-Our inputs are markdown files that are basically structured text. Therefore using string manipulations and regex patterns, we can shape them to become structured data like a CSV or a JSON file .
+The inputs are markdown files that are basically structured text. Therefore using string manipulations and regex patterns, we can shape them to become structured data like a CSV or a JSON file .
 
 We will use DataFrames for efficient processing.
 
@@ -202,16 +205,16 @@ We want a **Tidy** dataframe:
 
 We can then chain operations in a pipeline that uses the expressions.
 
-I'm already familiar with traditional string manipulation and know it would work even if the solution is cumbersome and complex. We will see if an LLM can be a solution and be competitive, both outputs will be in JSON format for easy comparison.
+I'm already familiar with traditional string manipulation and know it would work even if the solution can be cumbersome and complex. We will see if an LLM can be a solution and be competitive, both outputs will be in JSON format for easy comparison.
 
 #### 🤖 Model selection
 
 Choosing the right model can be a complicated task.  
-I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low resources** and **offline** solution. I used Ollama with an M1 Pro MacBook.  
-I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window (Under Apache 2.0 license).  
+I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low resources** and **offline** solution.
+I selected the model [**qwen2.5:3b**](https://ollama.com/library/qwen2.5) mainly because it supports JSON outputs and has a big context window. (The model is under the Apache 2.0 license).  
 
-Choosing the right model can be a complicated task and testing many models takes time and resources. I decided to select a model that had good results with no optimizations and tried to improve from there.  
-It is also important to define what we want the model to do and how.
+Testing many models takes time and resources. I decided to select a model that had good results with no optimizations and tried to improve from there.  
+It is also important to think ahead about what we want the model to do and how.
 
 In this project we use the LLM for **content extraction** and it is particularly suited because:
 - 100% of the content to extract is in the input
@@ -244,7 +247,7 @@ The request output is a JSON file with 2 objects:
 - **resultats**: job offer information
 - **totalCount**: total number of offers found
 
-The request asks for 20 objects from the first page to limit the amount of data.
+The request is set up to asks for 20 objects from the first page to limit the amount of data.
 ```json
 "pagination": {"range": 20, "startIndex": 0},
 ```  
@@ -281,11 +284,12 @@ Execution time :
 - Polars: 0.04s
 
 To compare the differences between the LLM's output and Polars's output, I used *git diff* on JSON files. I selected the offer_3 that showcases most of the differences.  
+
+Let's detail the git diff:  
 **White text** is present in **both**.  
 <span style="color:green">**Green text**</span> is only present in the **LLM's output**  
 <span style="color:red">**Red text**</span> is only present in the **Polars's output**  
 
-Let's detail the git diff.  
 
 **1.** Content is the same for both as well as small differences that don't have any impact on the meaning.  
 ![small_diff_and_normal](screenshots/small_diff_and_normal.png)  
@@ -311,13 +315,13 @@ This is one of the clearer example of the LLM failures. In most offers, the diff
 - larger (small) models would be better at this task
 
 ❌ **Cons**: 
-- requires understanding how the LLM will handle the task and some tests and retries
+- requires to understand how the LLM will handle the task and some tests and retries
 - requires hardware
 - potential unexpected output or behaviour
 
 I tested different small models of different sizes and here are my observations:
 
-In very rare cases the LLM changes small words but with no impact on the meaning of the text
+- In very rare cases the LLM changes small words but with no impact on the meaning of the text
 - If a section is long, the LLM can stop and ignore the rest
 - Some words are misinterpreted as section titles
 - Some words are misinterpreted as being in another section's title, or in a different context from the previous lines, causing the model to ignore the rest of the text. I couldn't fix this behavior with prompt engineering.
@@ -356,6 +360,11 @@ We find here 3 caveats of small LLMs. We observe the limitations of the model it
 - complex code that is harder to maintain and to understand. The accumulation of unique cases or conditions to take into account can worsen this.  
 - static and breaks if the input changes from the expected format
 - needs to take care of every unique cases, can be cumbersome
+
+> 1 element can break my code anytime:
+> - If one of the markdown headers that i marked as 'always present', is missing, the code will return an error. To fix it, i have to add a conditionnal rename in the pipeline.  
+> There can be other potential breaking points i havn't encounter.  
+> How many unique cases will i encounter if i countinue to extract data overtime ?
 
 Polars expressions are meant to work with DataFrames.
 
@@ -430,7 +439,7 @@ The pipeline uses 3 external elements:
 - 1 list (FINAL_COLUMNS)
 
 **1.** The pipeline uses the list of Polars expressions, essentially applying to the DataFrame n expressions one after the other (this list of expressions is my solution to the unpredictable header structure/organization of the job offers).  
-**2.** It renames some variables using the rename function with a dynamic dictionary to handle a specific case.  
+**2.** It renames some variables using the rename function with a dynamic dictionary to handle specific cases.  
 **3.** It uses the expression *remove noise and whitespaces* to do what it says.  
 **4.** It filters the DataFrame to keep only a subset of variables that are specified in the list *FINAL_COLUMNS*. *require_all=False* basically allows the code to work even if the variable is missing which was the case with different structures of job offers.  
 **5** We return a Polars DataFrame.  
@@ -472,18 +481,19 @@ The expression advantage: Instead of chaining 20 sequential operations, I break 
 String manipulation done right returns what the user wants and allows for (unlimited) flexibility as long as we take the time and efforts in the code to handle every exception, every possibility.  
 LLMs have limitations and will always have a part of randomness in their output (even when the randomness has no negative impact).  
 
-Use LLM for content extraction:
-- when the content to extract is small and easy to identify
-- when the output is structured
-- when the extracted content needs simple processing (summarization, translation, re-organization)
-- when a complex task can be decomposed into smaller, simpler ones for multiple LLMs to work together
-- when the hardware allows for larger models
+Use LLM for content extraction when:
+- the content to extract is small and easy to identify
+- the output is structured
+- the extracted content needs simple processing (summarization, translation, re-organization)
+- a complex task can be decomposed into smaller, simpler ones for multiple LLMs to work together
+- there are unique cases, similar to the expected output
+- the hardware allows for larger models
 
 Use traditional techniques:
 - when the content to process is huge. Either big files, or big groups of small files
 - when speed is a primary concern. When the execution has to be fast/optimized
 - when the input follows a defined format or pattern that is easy to convert to code logic
-- when robustness is a primary concern. LLMs are black boxes that have unexpected behaviors, whereas outside of bugs, we have a very good control and understanding of regular code execution.
+- when robustness is a primary concern. LLMs are black boxes that have unexpected behaviors, whereas outside of bugs, we have a very good control and understanding of regular code execution
 
 ### Lessons learned: Model behavior insights, preprocessing importance
 
@@ -506,7 +516,7 @@ We also don't have to write cumbersome data validation code.
 
 We use Pydantic for the LLM twice:
 
-- to create the structured output schema for the LLM to follow (it's just a pydantic model). It helps substantially the LLM.
+- to create the structured output schema for the LLM to follow (it's just a pydantic model). It helps substantially the LLM
 - to validate the LLM's output  
 
 ### 🌐 How browsers work:
@@ -516,8 +526,8 @@ The **web browser** is the core application of modern web browsing. It is the ga
 Web pages are built from multiple components that work together. 
 - **HTML** provides the structure
 - **CSS** files define the visual styling (how the page looks)
-- **JavaScript** files add interactivity and dynamic behavior. 
-- more static resources like images.
+- **JavaScript** files add interactivity and dynamic behavior
+- more static resources like image
 
 HTML and CSS are static. They load quickly and provide the visual foundation. JavaScript is dynamic. It enables all the interactive features and real-time content updates that make modern websites.
 
@@ -564,7 +574,7 @@ With bypass:
 # ☑️ Conclusions<a name="conclusion"></a>
 
 In this project I learned about:
-- **web scraping**, 2 different approaches amongs many and about good practices
+- **web scraping**, 2 different approaches amongs many and about good practices when scraping data
 - **content extraction from documents**, and structured outputs
 - **LLMs** (small LLMs) as tools in their integration in a workflow and a data pipeline
 - **new Python libraries**, to work with AI (LangChain, Pydantic), to extract content from the web (Crawl4AI), to manipulate data as DataFrames (Polars)
@@ -578,11 +588,11 @@ The project could be extended with a visualization tool of the dataset to explor
 This project could be further with the addition of tests, more monitoring and evaluation of the code. We could have a number for the Polars's actual performance on the content extraction, a number on the misses of the LLM. We could have small descriptive statistics at the offer level or at the global level to understand and assess better which approach is better and why.  
 
 This project could be further improved by: 
-- adding tests, more monitoring and evaluation of the code. 
+- adding tests, more monitoring and evaluation of the code
 - quantitative metric for the Polars's actual performance on the content extraction
 - quantitative metric on the misses of the LLM
 - descriptive statistics at the offer level and at the global level to understand and assess better which approach performs best
-- an application to consul the extracted offers and have a complete workflow from raw data to real usage
+- an application to explore the extracted offers and have a complete workflow from raw data to real usage
 
 ----
 

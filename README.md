@@ -277,15 +277,15 @@ To compare the differences between the LLM's output and Polars's output, I used 
 Let's detail the git diff.  
 
 **1.** Content is the same for both as well as small differences that don't have a major impact on the meaning.  
-![small_diff_and_normal](outputs/compare_results/small_diff_and_normal.png)  
+![small_diff_and_normal](data/compare_results/small_diff_and_normal.png)  
 
 **2.** Major issues from the LLM: missing blocks of content from the bigger sections: Missions. The big red part is not found in the LLM output.  
-![missing_content](outputs/compare_results/missing_content_missions.png)   
+![missing_content](data/compare_results/missing_content_missions.png)   
  
 **3.** the LLM sometimes simplifies the information and thus misses some of the content.   
-![simplification_content_and_missed](outputs/compare_results/simplification_content_and_missed.png)  
+![simplification_content_and_missed](data/compare_results/simplification_content_and_missed.png)  
 
-This is a particularly bad example of the LLM failures. In most offers, the differences are in small words or sentences that are slightly different or punctuation.
+This is one of the clearer example of the LLM failures. In most offers, the differences are in small words or sentences that are slightly different or punctuation.
 
 ----
 
@@ -422,7 +422,7 @@ remove_noise_and_whitespaces = (
     .str.strip_chars()
     .str.replace_all(
         r"^(.*?)\n", value=""
-    )  # remove first line if it ends with a \n (it removes the headers artifacts)
+    )  # remove first line if it ends with a \n (it removes the headers residuals)
 )
 ```
 
@@ -432,13 +432,13 @@ Let's break it down:
 - ```str.strip_chars()``` removes leading and trailing whitespaces from the string values
 - ```.str.replace_all(r"^(.*?)\n", value="")``` replaces a match pattern with a value.  
 Since we replace with nothing, we remove the element.  
-What we want to remove is given by the *regex* pattern "^(.*?)\n". Let's break it down:
-**^** means the start of the string
-The parentheses **()** declare a capture group
-**.** means any character except a newline
-**\*** is a quantifier, * means 0 or more
-**?** this makes the quantifier non-greedy so we match as few as possible until the pattern is satisfied.
-**\n** is a newline character.
+What we want to remove is given by the *regex* pattern ```"^(.*?)\n"```. Let's break it down:  
+```^``` means the start of the string.  
+The parentheses ```()``` declare a capture group.  
+```.``` means any character except a newline.  
+```\*``` is a quantifier, **\*** means 0 or more.  
+```?``` this makes the quantifier non-greedy so we match as few as possible until the pattern is satisfied.  
+```\n``` is a newline character.  
 
 We can express this regex as a sentence:  
 - From the start of the line, match any character until it encounters a newline character. The pattern will stop at the first newline character found after the pattern, rather than going to the *last* newline character it can find.

@@ -108,7 +108,7 @@ remove_noise_and_whitespaces = (
     .str.strip_chars()
     .str.replace_all(
         r"^(.*?)\n", value=""
-    )  # remove first line if it ends with a \n (it removes the headers artifacts)
+    )  # remove first line if it ends with a \n (it removes the headers residuals)
 )
 
 # Configuration:

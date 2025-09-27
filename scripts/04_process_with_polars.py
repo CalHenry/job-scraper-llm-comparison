@@ -67,7 +67,7 @@ Steps:
 """
 
 # Pre-processing:
-# In the terminal: I used 'rg '^\s*\*?\s*(?:##|###)'' in the dir with the .md files to get all the headers for all the files.
+# In the terminal: 'rg --no-ignore '^\s*\*?\s*(?:##|###)'' in the dir with the .md files to get all the headers for all the files.
 all_possible_headers = r"|".join(
     [
         r"Vos missions en quelques mots",  # always present
@@ -109,7 +109,6 @@ remove_noise_and_whitespaces = (
     .str.replace_all(
         r"^(.*?)\n", value=""
     )  # remove first line if it ends with a \n (it removes the headers artifacts)
-    # .str.replace_all(r"\n", value=" ")
 )
 
 # Configuration:

@@ -236,7 +236,7 @@ packages:
 - pypi: ./
   name: ai-scrapper-jobmarket
   version: 0.1.0
-  sha256: 3f2865a394d6d25321db4c664e5b39fc565ff63dc079b9b2a510e775c00edada
+  sha256: ba17c6eb320a295b6ed992a4a746907246e28913ae1cd03eece04fcd7f8fc0c0
   requires_dist:
   - crawl4ai>=0.7.4,<0.8
   - nest-asyncio>=1.6.0,<2

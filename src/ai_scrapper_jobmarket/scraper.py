@@ -14,7 +14,7 @@ async def extract_links(job_name: str):
     Use 'css_selector' to have a specific output (we obtain only links in markdown format)
     Store the list of links to json
     """
-    job_name_encoded = urllib.parse.urlencode(job_name)
+    job_name_encoded = urllib.parse.quote(job_name)
 
     # Crawl4ai config
     browser_conf = BrowserConfig(headless=True, text_mode=True)
@@ -31,12 +31,12 @@ async def extract_links(job_name: str):
             config=config,
         )
 
-    # save to json
-    with open("output/links/frgouv_links.json", mode="w") as file:
+    # save to json (clsv = choisir le service public)
+    with open("data/raw/links/clsp_links.json", mode="w") as file:
         json.dump(result.links["internal"], file)
 
 
-async def scrape_job_offers(links_file: str):
+async def scrape_job_offers(links_file_name: str):
     """
     Scrappe content of job offers from a list of links in json format
     load the json using polars --> convert to python list
@@ -49,7 +49,7 @@ async def scrape_job_offers(links_file: str):
     """
     # import links from json
     urls = pl.Series(
-        pl.read_json(f"output/links/{links_file}.json").select("href")
+        pl.read_json(f"data/raw/links/{links_file_name}.json").select("href")
     ).to_list()
 
     # crawl4ai
@@ -76,7 +76,7 @@ async def scrape_job_offers(links_file: str):
             filtered_content = remove_with_keyword(
                 res.markdown, "Des offres d'emplois recommandées pour vous"
             )
-            with open(f"results/job_{i}.md", "w", encoding="utf-8") as f:
+            with open(f"data/raw/scraped_pages/job_{i}.md", "w", encoding="utf-8") as f:
                 f.write(filtered_content)
         else:
             print("Failed:", res.url, "-", res.error_message)

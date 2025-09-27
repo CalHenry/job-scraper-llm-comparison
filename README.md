@@ -1,8 +1,22 @@
-# Let's find job offers
+<h1 align="center"><strong>🕵️‍♂️ Let's find job offers:</h6></strong></h1>
 
+----
+
+## 📚 Table of Contents
+- [Overview](#overview)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+- [Methodology](#methodology)
+- [Results](#results)
+- [Analysis](#analysis)
+- [Conclusion](#conclusion)
+ 
+ ----
+
+## 📌 Overview <a name="overview"></a>
 This is a personal project to explore web scraping, data retrieval, data processing and LLM integration.
 
-The project's goals are to get an automated way of finding new job offers, use different methods to scrape data, use LLM for information extraction and check if it is reliable.
+The project's goals are to get an automated way of collecting new job offers, use different methods to scrape data, use LLM for information extraction and check if it is reliable.
 
 - Discover the scraping library **Crawl4AI**
 - Use **LangChain** and **Pydantic** to monitor and validate the LLM's output
@@ -14,24 +28,21 @@ We will extract data from the web using 2 approaches:
 
 We will process and extract the data from the offers with 2 approaches: 
 - with an LLM
-- with traditional string manipulation
+- with traditional string manipulation  
 
-### Libraries:
 
-- **[Crawl4AI](https://github.com/unclecode/crawl4ai)** for web scraping 
-- **[LangChain](https://www.langchain.com/langchain)** and **[Pydantic](https://docs.pydantic.dev/latest/why/)** to set up the LLM and validate its output
+> *The ultimate goal of the project is to learn and practice.*
+
+### 📚 Prerequisites and Libraries<a name="prerequisites"></a>
+
+**Environment Requirements:**
+- **Python 3.11+**
+- **Ollama** to run LLM locally
+
+**Key Libraries:**
+- **[Crawl4AI](https://github.com/unclecode/crawl4ai)** for web scraping
+- **[LangChain](https://www.langchain.com/langchain)** and **[Pydantic](https://docs.pydantic.dev/latest/why/)** for LLM integration and output validation
 - **[Polars](https://github.com/pola-rs/polars)** for data manipulation using DataFrames and modern syntax
-
-#### Prerequisites
-
-**Environment**
-
-- **Python 3.11+**  
-- **Crawl4AI** for web scraping  
-- **LangChain** and **Pydantic** for LLM integration and output validation  
-- **Polars** for data manipulation 
-- **Ollama** to run LLM locally  
-
 **Hardware**
 
 - A machine with a GPU or a modern laptop with an integrated GPU (e.g. Apple Silicon M1pro).  
@@ -43,25 +54,71 @@ We will process and extract the data from the offers with 2 approaches:
 - Interest for web scrapping.  
 - Understanding of LLMs (prompt engineering, structured outputs).  
 
-> *The ultimate goal of the project is to learn and practice.*
+### ✅ Setup and Instructions <a name="setup"></a>
 
-# Methodology
+To set up the project locally, follow these steps:
 
-## Data sources
+1. **Clone the Repository**:
+
+   ```bash
+   git clone https://github.com/CalHenry/job-scraper-llm-comparison.git
+   cd job-scraper-llm-comparison
+   ```
+
+
+2. **Set up the virtual environment with Pixi**:
+
+If you don't have [Pixi](https://pixi.sh/dev/installation/): 
+   ```bash 
+   # Unix: (or with Homebrew)
+    curl -fsSL https://pixi.sh/install.sh | sh
+
+   # Windows:
+    powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"
+   ```
+
+Use the following pixi task:
+   ```bash
+   pixi run setup
+   ```
+
+This pixi task:
+- installs the packages into the pixi env
+- creates the data folder and subfolders
+- setup crawl4ai
+
+3. **Run the scripts**:
+
+In the terminal:
+   ```bash
+   pixi run python 01_...
+   pixi run python 02_...
+   ...
+   ```
+I advice to run the scripts one by one to make sure that all is working fine. 
+
+What is pixi and why use it ?
+(why pixi ?*Pixi is a modern virtual environment manager for Conda env*  )
+
+----
+
+## 🔬 Methodology<a name="methodology"></a>
+
+### Data sources
 
 We extract data from 2 different websites:
 
-[🌐 Choisir le service public](https://choisirleservicepublic.gouv.fr/): Official French public service job platform.
+[🔗 Choisir le service public](https://choisirleservicepublic.gouv.fr/): Official French public service job platform.
 
-[🌐 APEC](https://www.apec.fr/): French organization supporting white-collar workers in their career transitions and professional development. It is also a job offer platform.
+[🔗 APEC](https://www.apec.fr/): French organization supporting white-collar workers in their career transitions and professional development. It is also a job offer platform.
 
 We used a different approach for each:
 - web scraping: with CSS selectors (**Choisir le service public**)
 - By reverse-engineering the website's hidden API to access the data directly (**APEC**)
 
-## Extracting Data from the Web
+### 🌐 Extracting Data from the Web
 
-### Approach 1: Web scraping
+#### 🕷️ Approach 1: Web scraping
 
 Web scraping is about extracting information from a web page. 
 Different techniques exist and the output is a mix of the targeted data and unwanted elements or informations.  
@@ -77,7 +134,7 @@ Crawl4AI produces a nice output in markdown format, perfect to ingest into an LL
 We used CSS selectors to focus the scraper.
 This allowed extracting the desired content with limited noise to remove later.
 
-### Approach 2: API reverse engineering
+#### 🔧 Approach 2: API reverse engineering
 
 The concept is to analyze the HTTP requests and responses exchanged between the web browser and the server. This is easy to do with the browser's devtools **network panel**.
 
@@ -85,14 +142,14 @@ This approach required me to understand how web browsers and the web work and I 
 
 The **browser's devtools** network panel shows in real time all the requests and responses that occur since the page was loaded. We can explore the requests and find the ones that contain data. We have to test the APIs, understand their purpose, maybe the interactions between the different APIs, because there is no documentation to help us for those hidden APIs.
 
-The goal is to have a command with the right filters, to get only the data we want from the API. The devtools allow us to copy as a cURL command the requests of the panel and this is the info we need to build a [**POST**](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/POST) request to use in Python with the **requests module**. We could also have stuck to the command line and with minimal shell scripting achieve the same result. It's only for personal preferences that I used Python since using the command line is usually more straightforward to implement and faster.
+The goal is to have a command with the right filters, to get only the data we want from the API. The devtools allow us to copy as a **cURL** command the requests of the panel and this is the info we need to build a [**POST**](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/POST) request to use in Python with the **requests module**. We could also have stuck to the command line and with minimal shell scripting achieve the same result. It's only for personal preferences that I used Python since using the command line is usually more straightforward to implement and faster.
 
 If the API is straightforward, visible in the network traffic and has minimal authentication, finding the elements we need is very easy.
 
 Here is the **POST** request that contains our data and to the right the **Response** panel indeed shows the data.  
 ![devtools_CURL](screenshots/request.png)  
 
-Getting the cURL command is as easy as that:  
+Getting the **cURL** command is as easy as that:  
 ![devtools_CURL](screenshots/CURL.png)  
 
 
@@ -105,13 +162,13 @@ Another benefit of this approach is skipping the web browser entirely from the e
 >This is not illegal: we only access the data provided in the web page using a *public API*.   
 >Nevertheless, we have to respect the API's owner and not overwhelm their infrastructure and follow the **robots.txt** guidelines. In our case we do a call to get the data for each web page but it's no different from loading a web page with the web browser so our usage of the API is very small.
 
-## Data processing
+### ⚙️ Data processing
 
 Scraped data is processed twice to obtain the same result to compare both solutions:
 
 1. With an **LLM**:
 
-Asking it to extract the content of the job offer and fill a structured JSON with a defined schema. The job offer input will be a markdown document, direct output from the web scraping.
+Prompt it to extract the content of the job offer and fill a structured JSON with a defined schema. The job offer input will be a markdown document, direct output from the web scraping.
 
 To work with LLMs we need: 
 
@@ -123,26 +180,33 @@ To work with LLMs we need:
 
 2. With **traditional string manipulation** 
 
-Our inputs are markdown files that are basically structured text, therefore using string manipulations and regex patterns, we can shape them to be a structured output.
+Our inputs are markdown files that are basically structured text. Therefore using string manipulations and regex patterns, we can shape them to become structured data like a CSV or a JSON file .
 
 We will use DataFrames for efficient processing and **Polars** provides a great API to work with strings and DataFrames. 
 
-We will have a tidy DataFrame with a row for each job offer, and a column for each information we want to extract. This way we can do the same transformations on all the offers easily and at the same time.
+We want a tidy dataframe:
+- a row for each offer
+- a column for each information  
 
-Polars is great because it has a whole API to process strings of text (Series in Polars) with ***expressions***. The expressions allow performing operations on columns or rows in an optimized and vectorized way. They can be seen as custom functions since they can be crafted, named, and be used multiple times on different data. We build an expression with a precise purpose. 
+Polars is great at string operations through its expression API, which allows vectorized, optimized transformations on entire columns (or rows) at once. These expressions act like reusable functions: customizable, nameable, thus applicable to multiple datasets.
 
 We can then create a pipeline that uses the expressions.
 
-For example: Instead of a single block of code that chains 20 actions, we have a block that uses 4 expressions of 5 actions, that are named after what they do. Our pipeline can almost be read like a sentence.   
-This approach also limits the number of intermediate outputs that load the RAM and makes the code much harder to maintain.  
+For example:   
+Instead of a single block of code that chains 20 actions, we have a block that uses 4 expressions of 5 actions, that are named after what they do. Our pipeline can almost be read like a sentence.   
+This approach also limits the number of intermediate outputs that load the RAM and makes the code harder to maintain.  
 Expressions also allow Polars to evaluate the code before running it, allowing for optimization for faster and more efficient code.
 
-To sum up, we have cleaner, optimized and efficient code, that is easier to understand and to maintain.
+Instead of a single code block of 20 sequential operations—we break transformations into modular expressions (e.g., 4 named expressions, each handling 5 actions). It is:
+- **Readable as text**: The pipeline becomes self-documenting, with each expression’s name reflecting its purpose.
+- **Reduces overhead**: Fewer intermediate outputs mean lower memory usage and simpler maintenance.
+- **Enables optimization**: Polars pre-evaluates expressions, allowing for lazy execution—compiling operations into efficient, vectorized steps before runtime.
 
+**Result**: Cleaner, faster, and more maintainable code that can scales easily.
 
-I'm already familiar with traditional string manipulation and know it would work. We will see if the LLM can be a solution as well, both outputs will be in JSON format for easy comparison.
+I'm already familiar with traditional string manipulation and know it would work even if the solution is cumbersome and complex. We will see if an LLM can be a solution and be competitive, both outputs will be in JSON format for easy comparison.
 
-### Model selection
+#### 🤖 Model selection
 
 Choosing the right model can be a complicated task.  
 I wanted to use a small LLM that could run **locally** on my machine to have a **free**, **low resources** and **offline** solution. I used Ollama with an M1 Pro MacBook.  
@@ -157,7 +221,9 @@ In this project we use the LLM for **content extraction** and it is particularly
 - the input is well structured with markdown headers
 - the input is <10K characters (≈ 2200 tokens + prompt, far from the 128K tokens context limit of the model)
 
-# Results
+----
+
+## 📊 Results<a name="results"></a>
 
 ### Web scraping outcomes:
 
@@ -198,7 +264,7 @@ The file has the following keys:
 - contractDuration (contract's duration)
 - url  
 
-### LLM performance:
+### 🎯 LLM performance:
 
 - The model was able to process the markdown files and return a valid JSON output.
 - It took between 25s and 60s to process a file
@@ -209,7 +275,7 @@ The file has the following keys:
 - The script runs very fast and produces the desired output
 - The script adapts to each file and processes it correctly regarding its specificities in the markdown headers
 - Extracts all the content for all the possible keys
-- Output is in CSV and/or JSON
+- Output as CSV and/or JSON
 
 ### Comparison between Polars and LLM results:
 
@@ -219,8 +285,8 @@ Execution time :
 
 To compare the differences between the LLM's output and Polars's output, I used *git diff* on JSON files. I selected the offer_3 that showcases most of the differences.  
 **White text** is present in **both**.  
-**Green text** is only present in the **LLM's output**  
-**Red text** is only present in the **Polars's output**  
+<span style="color:green">**Green text**</span> is only present in the **LLM's output**  
+<span style="color:red">**Red text**</span> is only present in the **Polars's output**  
 
 Let's detail the git diff.  
 
@@ -235,7 +301,9 @@ Let's detail the git diff.
 
 This is a particularly bad example of the LLM failures. In most offers, the differences are in small words or sentences that are slightly different or punctuation.
 
-# Analysis
+----
+
+## 🔎 Analysis<a name="analysis"></a>
 
 ### Why Pydantic is Essential to our codebase
 
@@ -255,7 +323,7 @@ We use Pydantic for the LLM twice:
 - create the structured output schema for the LLM to follow (it's just a pydantic model). It helps substantially the LLM.
 - to validate the LLM's output  
 
-### How browsers work:
+### 🌐 How browsers work:
 
 The **web browser** is the core application of modern web browsing. It is the gateway to the internet for 99% of people and is one of the elements that makes the modern web. It is also the most used application on computers and nowadays almost everything can be done on the internet therefore with a web browser.
 
@@ -357,6 +425,8 @@ We find here 3 caveats of small LLMs. We observe the limitations of the model it
 - needs problem solving skills and good logic
 - need to analyze and understand the challenges of the content to treat all the possible cases
 - complex code that is harder to maintain and to understand. The accumulation of unique cases or conditions to take into account can worsen this.  
+- static and breaks if the input changes from the expected format
+- needs to take care of every unique cases, can be cumbersome
 
 Polars expressions are meant to work with DataFrames.
 
@@ -406,11 +476,15 @@ Now let's see the different expressions in the final pipeline and why it can be 
         .rename(
             {
                 "Vos missions en quelques mots": "missions",
-                "Statut du poste": "job_status",
                 "Métier de référence": "profession",
                 **(
                     {"Descriptif du service": "employeur_description"}
                     if "Descriptif du service" in available_cols
+                    else {}
+                ),
+                **(
+                    {"Statut du poste": "job_status"}
+                    if "Statut du poste" in available_cols
                     else {}
                 ),
             }
@@ -418,7 +492,6 @@ Now let's see the different expressions in the final pipeline and why it can be 
         .select(remove_noise_and_whitespaces)
         .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
     )
-
     return final_df
 ```
 
@@ -441,24 +514,26 @@ We chained the methods for an all-in-one, easy to read and clear code block.
 
 **Why not Pandas?**  
 
-The answer lies in the design philosophy of both libraries.  
-In Pandas, we can also use method chaining, in fact, my pipeline would be very similar in Pandas with mostly the same code with different function names.  
+Short answer: personal preferences. 
+
+Long answser: the design philosophy of both libraries.  
+In Pandas, we can also use method chaining, in fact, my pipeline would be very similar in Pandas with mostly the same code with different function's names.  
 But it is less common and not the standard for a few reasons:
-- Pandas is **eager**. Each operation is evaluated immediately, which makes method chaining harder code to debug and possible performance overhead since the output of each step is created, and reused for the next one, even if we didn't declare those intermediate datasets. With large datasets this is a real issue.
+- Pandas is **eager**. Each operation is evaluated immediately with can result in a performance overhead since the output of each step is created, stored in memory and reused for the next action, even if we didn't declare those intermediate outputs. With large datasets this becomes a real issue.  
 - **Harder to debug** and to understand. Since we don't create intermediate results, we can't easily inspect those results. This means that it is harder to maintain.  
 - To fit better the eager execution, Pandas works best with intermediate results.  
 
 **Why Polars is better at method chaining?**  
 - Polars has lazy execution, this allows for query optimizations. The entire pipeline is optimized with the Polars query optimizer and thus reduces redundant computations and improves performance. Game changer for large datasets.
-- Polars encourages a declarative style of programming, where we describe what we want to do rather than how to do it. It fits better method chaining as it allows expressing complex transformations concisely.
+- Inspired by the amazing [Tidyverse](https://medium.com/@temiloluwa.jokotola/tidyverse-vs-pandas-numpy-who-really-cleans-up-your-data-mess-681df1300d28), Polars encourages a declarative style of programming, where we describe what we want to do rather than how to do it. It fits better method chaining as it allows expressing complex transformations concisely.
 - Polars is a newer library, written in Rust and optimized for performance, with method chaining being a fundamental part of Polars' design.
 
-My dataset is very small so eager vs lazy doesn't make a difference, so using Pandas would have been as effective as Polars, but the code is better written in Polars in my opinion and it would be easier to adapt for huge datasets since we would only have to switch to the lazy API which is very easy to do. 
+My dataset is very small so eager vs lazy doesn't make a difference. Using Pandas would have been as effective as Polars, but the code is better written in Polars in my opinion and it would be easier to adapt for huge datasets since we would only have to switch to the lazy API which is very easy to do. 
 
-### When to use each approach  
+### ⚖️ When to use each approach  
 
-String manipulation done right returns what the user wants and allows for (unlimited) flexibility.  
-LLMs have limitations and will always have a part of randomness in their output (even if this randomness has no impact).  
+String manipulation done right returns what the user wants and allows for (unlimited) flexibility as long as we take the time and efforts in the code to handle every exception, every possibility.  
+LLMs have limitations and will always have a part of randomness in their output (even when the randomness has no negative impact).  
 
 Use LLM for content extraction:
 - when the content to extract is small and easy to identify
@@ -470,7 +545,8 @@ Use LLM for content extraction:
 Use traditional techniques:
 - when the content to process is huge. Either big files, or big groups of small files
 - when speed is a primary concern. When the execution has to be fast/optimized
-- when robustness is a primary concern. LLMs are still black boxes that have unexpected behaviors, whereas Python code can be rooted to the C implementations if it is ever needed to have a complete understanding of how the machine acts. 
+- when the input follows a defined format or pattern that is easy to convert to code logic
+- when robustness is a primary concern. LLMs are black boxes that have unexpected behaviors, whereas outside of bugs, we have a very good control and understanding of regular code execution.
 
 ### Lessons learned: Model behavior insights, preprocessing importance
 
@@ -478,29 +554,30 @@ Small LLMs are harder to 'control' and are much more sensitive to the input. If 
 Content structure, punctuation, keywords, are all elements that influence how the model will understand the text.  
 Removing those can help the model. I made this assumption because it worked for the majority of my files, but it can also worsen the performance. It comes down to the input itself and the model used. Each model has potentially different behavior.
 
+----
 
-
-# Conclusions
+# ☑️ Conclusions<a name="conclusion"></a>
 
 In this project I learned about:
-- **web scraping**, about 2 approaches among many and about good practices.
+- **web scraping**, 2 different approaches amongs many and about good practices
 - **content extraction from documents**, and structured outputs
 - **LLMs** (small LLMs) as tools in their integration in a workflow and a data pipeline
 - **new Python libraries**, to work with AI (LangChain, Pydantic), to extract content from the web (Crawl4AI), to manipulate data as DataFrames (Polars)
-- **project management** and organization
+- **project management**, organization, reproducibility
 
 The project is successful.  
 We managed to extract and process data from the web while testing different techniques for the extraction and the processing. We explored the pros and cons for each method and got a better idea of when to use each and why.  
 The results prove my intuitions to be wrong. I thought that the LLM would be better at handling the content and that my help (the prompt, the preprocessing), could fix most of the issues. I also thought that using a smaller LLM would be an advantage, that the model being simpler would tend to stay closer to the actual content and not try to prove it is smart. It turns out that it is the opposite because we trade robustness and capabilities for size and RAM usage.  
 
 The project could be extended with a visualization tool of the dataset to explore the job offers content in a better way.  
-This project could be further with the addition of tests, more monitoring and evaluation of the code. We could have a number for the Polars's actual performance on the content extraction, a number on the misses of the LLM. We could have small descriptive statistics at the offer level or at the global level to understand and assess better which approach is better and why.
+This project could be further with the addition of tests, more monitoring and evaluation of the code. We could have a number for the Polars's actual performance on the content extraction, a number on the misses of the LLM. We could have small descriptive statistics at the offer level or at the global level to understand and assess better which approach is better and why.  
 
 This project could be further improved by: 
 - adding tests, more monitoring and evaluation of the code. 
 - quantitative metric for the Polars's actual performance on the content extraction
 - quantitative metric on the misses of the LLM
-- descriptive statistics at the offer level or at the global level to understand and assess better which approach performs best.
+- descriptive statistics at the offer level and at the global level to understand and assess better which approach performs best
+- an application to consul the extracted offers and have a complete workflow from raw data to real usage
 
 
 ---

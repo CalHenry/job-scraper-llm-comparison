@@ -80,6 +80,8 @@ def process_markdown_files(
     # Get all markdown files
     md_files = list(input_path.glob("*.md"))
 
+    print(f"Found {len(md_files)} files to process")
+
     metadata = []
 
     # Process each file individually

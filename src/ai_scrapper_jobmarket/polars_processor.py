@@ -13,20 +13,20 @@ def parse_arguments():
         "--input",
         "-i",
         type=str,
-        default="data/processed/csv_files",
-        help="Input path: either a directory containing .md files or a single .md file (default=data/processed/csv_files)",
+        default="data/raw/scraped_pages",
+        help="Input path: directory containing either several .md files or a single .md file (default=data/raw/scraped_pages)",
     )
     parser.add_argument(
         "--output",
         "-o",
         type=str,
-        default="data/processed/csv_files/polars_offer.csv",
-        help="Output JSON file path (default=data/processed/csv_files/polars_offer.csv)",
+        default="data/processed/csv/polars_offer.csv",
+        help="Output JSON file path (default=data/processed/csv/polars_offer.csv)",
     )
     parser.add_argument(
         "--json",
         action="store_true",
-        help="Also save as JSON file (replaces .csv with .json in output path)",
+        help="Also save as JSON file (replaces .csv with .json in output's path)",
     )
     return parser.parse_args()
 
@@ -120,7 +120,7 @@ def build_concat_expressions(
     """Build concatenation Polars expressions from config
     - IF the base col exist, we check if its related cols exist as well and create and expression to concat them if found
     - we refer to 'available_cols' to know which one is present or isn't
-    - we use 'CONCAT_CONFIGS' to select the variable and set the alias for the concatenated column
+    - we use 'CONCAT_CONFIGS' ('configs' param) to select the variable and set the alias for the concatenated column
     """
     expressions = []
 
@@ -156,7 +156,9 @@ def clean_cols_with_expressions(
 
     # Profile fallback (add expression)
     if "Profil recherché" not in available_cols:
-        for col_series in wip.iter_columns():  # look for the col that contain 'profile'
+        for (
+            col_series
+        ) in wip.iter_columns():  # look for the col that contains 'profile'
             has_profil = col_series.str.contains(r"(?i)profil").any()
             if has_profil:
                 profil_column = col_series.name
@@ -169,7 +171,7 @@ def clean_cols_with_expressions(
             pl.col(f"{profil_column}")  # extract text from the col that has 'profile'
             .str.extract(
                 r"(?i)(profil[^\n]*(?:\n[^\n]+)*)"
-            )  # matches content after 'profil' until we encounter double new lines
+            )  # matches content after 'profil' until we encounter double new lines (assumption that it's the end of the section)
             .alias("profile")
         )
 
@@ -179,11 +181,15 @@ def clean_cols_with_expressions(
         .rename(
             {
                 "Vos missions en quelques mots": "missions",
-                "Statut du poste": "job_status",
                 "Métier de référence": "profession",
                 **(
                     {"Descriptif du service": "employeur_description"}
                     if "Descriptif du service" in available_cols
+                    else {}
+                ),
+                **(
+                    {"Statut du poste": "job_status"}
+                    if "Statut du poste" in available_cols
                     else {}
                 ),
             }

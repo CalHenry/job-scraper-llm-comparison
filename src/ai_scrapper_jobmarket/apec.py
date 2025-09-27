@@ -10,7 +10,7 @@ from src.ai_scrapper_jobmarket.models import JobSearchResponse
 def get_data(url: str, cURL_request_data: dict, page_index: int, headers: dict) -> dict:
     """query the hidden API for a specific page"""
     cURL_request_data["pagination"]["startIndex"] = page_index  # update the page index
-    post_response = requests.post(url, headers, json=cURL_request_data)
+    post_response = requests.post(url, headers=headers, json=cURL_request_data)
     post_response.raise_for_status()
     raw_data = post_response.json()
     return raw_data

@@ -47,7 +47,12 @@ save_path = "data/processed/json/APEC_offers.json"
 
 
 def main():
-    raw_data = get_data(url=url, cURL_request_data=cURL_request_data)
+    raw_data = get_data(
+        url=url,
+        cURL_request_data=cURL_request_data,
+        page_index=page_index,
+        headers=headers,
+    )
     updated_data = add_url(raw_data, base_url)
     transformed_data = apply_mapping_recursive(updated_data, code_mapping)
     success = validate_and_save_as_json(transformed_data, save_path)

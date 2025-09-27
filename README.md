@@ -10,7 +10,6 @@
 - [Results](#results)
 - [Analysis](#analysis)
 - [Conclusion](#conclusion)
-- [License](#license)
  
  ----
 
@@ -57,7 +56,7 @@ We will process and extract the data from the offers with 2 approaches:
 - Understanding of LLMs (prompt engineering, structured outputs).  
 
 ### ✅ Setup and Instructions <a name="setup"></a>
-
+In the terminal:
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/CalHenry/job-scraper-llm-comparison.git
@@ -71,14 +70,14 @@ We will process and extract the data from the offers with 2 approaches:
 
     If you don't have [Pixi](https://pixi.sh/dev/installation/): 
    ```bash 
-   # Unix: (or with Homebrew)
+   # Unix: (or with Homebrew for Macos)
     curl -fsSL https://pixi.sh/install.sh | sh
 
    # Windows:
     powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"
    ```
 
-    If you already have pixi, run the following pixi task:
+    Once you have pixi, run the following pixi task:
    ```bash
    pixi run setup
    ```
@@ -90,15 +89,27 @@ This pixi task:
 
 3. **Run the scripts**:
 
-    In the terminal, from the root of the project:
+    From the root of the project:
    ```bash
    pixi run python scripts/01_extract_job_offers_links.py
    ```
-I advice to run the scripts one by one to make sure that all is working fine. 
-
+    I advice to run the scripts one by one.
 
 (*Pixi is a modern virtual environment manager for Conda. It simplifies dependency management for both Conda and PyPI packages and supports ```pyproject.toml``` along with other nice features. (it's a turbocharged conda with PyPI superpowers thanks to UV*)
 
+4. **Configure the LLM**
+
+- In the terminal, download the model on your machine
+    ```bash
+    ollama pull qwen2.5:3b 
+    ```
+    Or replace *qwen2.5:3b* with any model you want to try.  
+    The model selection and parameters are hardcoded in the script langchain.py starting line 11. If you don't use the same exact model i used please change this part.
+    ```python
+    ollama_llm = OllamaLLM(
+        model="qwen2.5:3b",
+    ```
+    
 ----
 
 ## 🔬 Methodology<a name="methodology"></a>

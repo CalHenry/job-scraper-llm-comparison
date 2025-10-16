@@ -430,7 +430,6 @@ Now let's see the different expressions in the final pipeline and why it can be 
         .select(remove_noise_and_whitespaces)
         .select(cs.by_name(*FINAL_COLUMNS, require_all=False))
     )
-    return final_df
 ```
 
 The pipeline uses 3 external elements:
@@ -441,8 +440,7 @@ The pipeline uses 3 external elements:
 **1.** The pipeline uses the list of Polars expressions, essentially applying to the DataFrame n expressions one after the other (this list of expressions is my solution to the unpredictable header structure/organization of the job offers).  
 **2.** It renames some variables using the rename function with a dynamic dictionary to handle specific cases.  
 **3.** It uses the expression *remove noise and whitespaces* to do what it says.  
-**4.** It filters the DataFrame to keep only a subset of variables that are specified in the list *FINAL_COLUMNS*. *require_all=False* basically allows the code to work even if the variable is missing which was the case with different structures of job offers.  
-**5** We return a Polars DataFrame.  
+**4.** It filters the DataFrame to keep only a subset of variables that are specified in the list *FINAL_COLUMNS*. *require_all=False* basically allows the code to work even if the variable is missing which was the case with different structures of job offers.   
 
 This pipeline regroups ALL the concrete actions that modify the dataset, the code before that is only setup.  
 Each step is clear and has a defined purpose.  
@@ -464,7 +462,7 @@ In Pandas, we can also use method chaining, in fact, my pipeline would be very s
 **Why Polars excels at method chaining:**
 
 - **Lazy execution** enables query optimization. The entire pipeline is optimized by Polars' query optimizer, reducing redundant computations and improving performance—a game changer for large datasets.
-- **Declarative programming style** inspired by [Tidyverse](https://medium.com/@temiloluwa.jokotola/tidyverse-vs-pandas-numpy-who-really-cleans-up-your-data-mess-681df1300d28). we describe what we want to do rather than how to do it, making method chaining more natural for expressing complex transformations concisely.
+- **Declarative programming style** inspired by [Tidyverse](https://medium.com/@temiloluwa.jokotola/tidyverse-vs-pandas-numpy-who-really-cleans-up-your-data-mess-681df1300d28). We describe what we want to do rather than how to do it, making method chaining more natural for expressing complex transformations concisely.
 - **Built for chaining**: Polars is a newer library, written in Rust and optimized for performance, with method chaining being a fundamental part of Polars' design.
 
 While my small dataset makes eager vs lazy execution irrelevant, Polars produces cleaner code that easily scales to larger datasets by simply switching to the lazy API.
